@@ -61,15 +61,14 @@ more concrete and write only technical stuff. Nobody is intrested in reading
 about me
 -->
 
-<p>Screenshot
-Intro.
-In Unix terminal we can use colorful output for emphasazing important
-information. I'm currently studing in the Unversity and have a lot of task to
+<p><img alt="Octave Prompt Colored Messages" src="https://alberand.github.io/images/octave_messages.png"></p>
+<p>In Unix terminal we can use colorful output for emphasizing important
+information. I'm currently studying in the University and have a lot of task to
 solve using Octave. Its prompt is similar to classic Unix terminal, so I decided
 to try implement colored output information messages for my scripts.</p>
-<p>In the beggining of the article you can see screenshot of messages
+<p>In the beginning of the article you can see screenshot of messages
 that I write for myself to make output of my scripts a little bit fancier.</p>
-<p>Let's look at them closer. Every function is consist only of fprintf function
+<p>Let's look at them closer. Every function is consist only of <em>fprintf</em> function
 which draw sent text to the standard output (first argument is the output
 stream). In those functions we create construction where message text is wrap by
 special symbols which tells prompt to display this text with some styling as
@@ -277,15 +276,11 @@ PAGER_FLAGS<span class="o">(</span><span class="s2">&quot;-r&quot;</span><span c
 <p>First line adds your catalog to global search. So when you want to run
 this script you can just type in the prompt <code>messages</code> and this script will run.
 Second line runs this script. Because this configuration file (<code>.octaverc</code>) is 
-run at the startup of the Octave this script will be automaticly executed.
+run at the startup of the Octave this script will be automatically executed.
 Last command add parameter to <code>less</code> program which is used when output of your
 code isn't suitable for one screen of the display. This parameter needed to
 correctly display colors while you see output over the less program.</p>
 <p>That all! Now you can use this function to get fancy output. For example:</p>
-<!-- 
-# IMAGE Image with commands and corresponding messages.
--->
-
 <h4>References:</h4>
 <ul>
 <li><a href="https://www.gnu.org/software/octave/doc/v4.0.0/index.html">Octave Documentation</a></li>
