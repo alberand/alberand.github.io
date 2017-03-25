@@ -103,7 +103,8 @@ sudo ip link <span class="nb">set</span> dev tap0 up
 
 
 <p>Assign IP's range to bridge.</p>
-<div class="highlight"><pre><span></span>sudo dnsmasq --interface<span class="o">=</span>br0 --bind-interfaces --dhcp-range<span class="o">=</span><span class="m">192</span>.168.100.50,192.168.100.254
+<div class="highlight"><pre><span></span>sudo dnsmasq --interface<span class="o">=</span>br0 --bind-interfaces <span class="se">\</span>
+    --dhcp-range<span class="o">=</span><span class="m">192</span>.168.100.50,192.168.100.254
 </pre></div>
 
 
@@ -129,7 +130,7 @@ TAP interface up (br0 will change its state automatically). Run qemu:</p>
 </pre></div>
 
 
-<h3>Troubleshooting</h3>
+<h4>Troubleshooting</h4>
 <p>If you get error that tap0 already in use possibly you are trying to run more
 than one version QEMU for one TAP interface. Described approach is used only for
 two peers (host and guest). For multiple connection you need further
@@ -139,7 +140,7 @@ Otherwise you will fail to connect via SSH.</p>
 <h4>References</h4>
 <ul>
 <li><a href="http://www.qemu-project.org/">QEMU?</a></li>
-<li><a href="">TUN/TAP?</a></li>
+<li><a href="https://en.wikipedia.org/wiki/TUN/TAP">TUN/TAP?</a></li>
 </ul>
       </div>
 <!-- /.entry-content 
