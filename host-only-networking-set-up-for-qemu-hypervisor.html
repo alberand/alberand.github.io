@@ -110,8 +110,8 @@ sudo ip link <span class="nb">set</span> dev tap0 up
 
 <p>Make sure that interfaces are UP. If not run previously mentioned command to set
 TAP interface up (br0 will change its state automatically). Run qemu:</p>
-<div class="highlight"><pre><span></span>    qemu --qemu-append<span class="o">=</span><span class="s2">&quot;-device e1000,netdev=network0,mac=52:55:00:d1:55:01 \</span>
-<span class="s2">        -netdev tap,id=network0,ifname=tap0,script=no,downscript=no&quot;</span>
+<div class="highlight"><pre><span></span>qemu -device e1000,netdev<span class="o">=</span>network0,mac<span class="o">=</span><span class="m">52</span>:55:00:d1:55:01 <span class="se">\</span>
+        -netdev tap,id<span class="o">=</span>network0,ifname<span class="o">=</span>tap0,script<span class="o">=</span>no,downscript<span class="o">=</span>no
 </pre></div>
 
 
