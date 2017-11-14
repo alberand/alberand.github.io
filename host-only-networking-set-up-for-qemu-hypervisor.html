@@ -58,19 +58,18 @@
       </header>
 <!-- .entry-content -->
       <div class="entry-content">
-        <p>In this short note you can find approach to set up host-only network for QEMU
+        <p>In this short note I will try to describe how to set up host-only network for QEMU
 hypervisor. It means that guest system (run in QEMU) will be in LAN connection
-with host system (your machine). I used it for for experiments with SSH 
+with a host system (physical machine). I used it for some experiments with SSH 
 functionality of a guest system.</p>
-<p>Connection will be establish by virtual bridge and virtual TAP interface. After
-host setup you will need assign IP address to the guest system (if it doesn't do
-automatically) and you can use it remotely. </p>
-<p>Firstly, create bridge on the host machine:</p>
+<p>Connection will be establish by virtual bridge and TAP interface. After host
+setup you will need to assign IP address to the guest system.</p>
+<p>Firstly, create a bridge on the host machine:</p>
 <div class="highlight"><pre><span></span>sudo ip link add br0 <span class="nb">type</span> bridge
 </pre></div>
 
 
-<p>If use already created bridge don't forgot to clean out IP.</p>
+<p>If you want to use already created bridge don't forget to clean out IP.</p>
 <div class="highlight"><pre><span></span>sudo ip addr flush dev br0
 </pre></div>
 
@@ -96,47 +95,48 @@ ip tuntap show
 </pre></div>
 
 
-<p>Make sure everything up:</p>
+<p>Make sure everything is up:</p>
 <div class="highlight"><pre><span></span>sudo ip link <span class="nb">set</span> dev br0 up
 sudo ip link <span class="nb">set</span> dev tap0 up
 </pre></div>
 
 
-<p>Assign IP's range to bridge.</p>
+<p>Assign IP range to the bridge.</p>
 <div class="highlight"><pre><span></span>sudo dnsmasq --interface<span class="o">=</span>br0 --bind-interfaces <span class="se">\</span>
     --dhcp-range<span class="o">=</span><span class="m">192</span>.168.100.50,192.168.100.254
 </pre></div>
 
 
-<p>Make sure that interfaces are UP. If not run previously mentioned command to set
-TAP interface up (br0 will change its state automatically). Run qemu:</p>
-<div class="highlight"><pre><span></span>qemu -device e1000,netdev<span class="o">=</span>network0,mac<span class="o">=</span><span class="m">52</span>:55:00:d1:55:01 <span class="se">\</span>
+<p>Make sure that interfaces are UP. If not run previously mentioned commands to set
+TAP interface up (br0 will change its state automatically). Run Qemu with some
+MAC address:</p>
+<div class="highlight"><pre><span></span>qemu -device e1000,netdev<span class="o">=</span>network0,mac<span class="o">=</span><span class="m">00</span>:00:00:00:00:00 <span class="se">\</span>
         -netdev tap,id<span class="o">=</span>network0,ifname<span class="o">=</span>tap0,script<span class="o">=</span>no,downscript<span class="o">=</span>no
 </pre></div>
 
 
-<p>Assign static IP address to qemu for further work.</p>
+<p>Assign static IP address to the guest system:</p>
 <div class="highlight"><pre><span></span>ip addr add 192.168.100.224/24 broadcast 192.168.100.255 dev eth0
 </pre></div>
 
 
-<p>Don't forgot to add root password:</p>
+<p>Don't forget to add root password:</p>
 <div class="highlight"><pre><span></span>passwd
 </pre></div>
 
 
-<p>Now you can connect to the qemu virtual machine using SSH:</p>
+<p>Now you can connect to the Qemu guest system using SSH:</p>
 <div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="n">root</span><span class="mf">@192.168.100.224</span>
 </pre></div>
 
 
 <h4>Troubleshooting</h4>
-<p>If you get error that tap0 already in use possibly you are trying to run more
-than one version QEMU for one TAP interface. Described approach is used only for
-two peers (host and guest). For multiple connection you need further
-configuration.</p>
-<p>As mentioned before make sure that both interfaces as TAP as Bridge are up.
-Otherwise you will fail to connect via SSH.</p>
+<p>If you get an error that tap0 is already in use, possibly, you are trying to run
+more than one version of QEMU for one TAP interface. Described configuration is
+used only for two peers (host and guest). For multiple connection you need
+different configuration.</p>
+<p>As mentioned before make sure that both TAP and Bridge are up.  Otherwise you
+will fail to connect via SSH.</p>
 <h4>References</h4>
 <ul>
 <li><a href="http://www.qemu-project.org/">QEMU?</a></li>
