@@ -4,7 +4,7 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
   <head>
-    <title>About - Andrew Albershtein</title>
+    <title>PlatformIO + STM32 Nucleo - Andrew Albershtein</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link href="http://127.0.0.1:8000/theme/bootstrap.css" rel="stylesheet" />
@@ -37,7 +37,7 @@
         </div>
         <div class="collapse navbar-collapse navbar-right">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="http://127.0.0.1:8000/pages/about.html">About</a></li>
+            <li><a href="http://127.0.0.1:8000/pages/about.html">About</a></li>
             <li><a href="http://127.0.0.1:8000/tags.html">Tags</a></li>
           </ul>
         </div>
@@ -48,33 +48,66 @@
     <section id="content" class="article content">
       <header>
         <h2 class="entry-title">
-          About
+          PlatformIO + STM32 Nucleo
         </h2>
         
+        <div class="text-muted" style="float: left; margin-right: 20px;">23.11.2017</div>
+        <div class="text-muted">
+            <a href="http://127.0.0.1:8000/category/electronics.html"><div class="fa fa-lg fa-folder-open"></div> Electronics</a>
+            <a href="http://127.0.0.1:8000/tag/stm32.html"><div class="fa fa-lg fa-tag"></div> stm32</a>
+            <a href="http://127.0.0.1:8000/tag/platformio.html"><div class="fa fa-lg fa-tag"></div> platformio</a>
+        </div>
       </header>
 <!-- .entry-content -->
       <div class="entry-content">
-        <p>I'm engineering student from Prague, Czech Republic. I'm on the way to my Master's
-degree at Czech Technical University in Prague (CTU) in Cybernetics and Robotics.
-I'm interested in Linux, automatization and programming.</p>
-<p>I can be contacted by Email, Facebook and Telegram (preferred):</p>
-<ul style="list-style-type:none">
- <li><i class="fas fa-envelope fa-1g" aria-hidden="true"></i> Email: <code>
-        <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com" target="_top">albershteyn.andrey@gmail.com</a>
-    </code>
- </li>
- <li><i class="fab fa-linkedin fa-1g" aria-hidden="true"></i> LinkedIn: <code>
-     <a class="link-in-code" href="https://www.linkedin.com/in/andrey-albershteyn-93a96a124">Andrey Albershteyn</a>
-   </code>
- </li>
- <li><i class="fab fa-telegram fa-1g" aria-hidden="true"></i> Telegram: <code>
-     <a class="link-in-code" href="https://t.me/alberand">@alberand</a>
-   </code>
- </li>
+        <ul>
+<li>What is platformio and why it is udobno</li>
+<li>STM32 had a few paid IDE. But we can live without them</li>
+<li>Required software + hardware</li>
+<li>Platformio config</li>
+<li>Problem with libs</li>
+<li>Setup for Platformio IDE. I use vim add to .vimrc</li>
+</ul>
+<p>In root directory of your project there is platformio configuration file
+<code>platformio.ini</code>. We will need to create an environment in accordance with board
+which we are using. Mine looks as follow:</p>
+<div class="highlight"><pre><span></span><span class="k">[platformio]</span>
+<span class="na">env_default</span> <span class="o">=</span> <span class="s">nucleo</span>
+
+<span class="k">[env:nucleo]</span>
+<span class="na">platform</span> <span class="o">=</span> <span class="s">ststm32</span>
+<span class="na">framework</span> <span class="o">=</span> <span class="s">mbed</span>
+<span class="na">board</span> <span class="o">=</span> <span class="s">nucleo_l476rg</span>
+<span class="na">upload_protocol</span> <span class="o">=</span> <span class="s">stlink</span>
+<span class="na">lib_ldf_mode</span> <span class="o">=</span> <span class="s">deep</span>
+</pre></div>
+
+
+<p>You can create a few environments for different board or different ways or
+upload. I have only one configuration for STM32 Nucleo L476RG board. In main
+<code>[platformio]</code> I set it as default to run <code>platformio</code> command without
+additional parameters (<code>-e nucleo</code>).</p>
+<p>In board configuration you need to set type of the platform as <code>ststm32</code>.
+Because I am using <code>mbed</code> operation system I set framework to <code>mbed</code>. But you
+can set it to {TODO}.</p>
+<p>Next, you need to choose your board from the list of supproted hardware. This
+list can be found by executing <code>platformio -{TODO}</code>.</p>
+<p>Unfortunately, platformio library repository doesn't have many of the mbed
+libraries. Therefore, most of them you will need to install manually by
+downloading from <code>os.mbed.com</code> and moving to lib directory.</p>
+<h4>References:</h4>
+<ul>
+<li><a href="">platformIO</a></li>
+<li><a href="">mbed</a></li>
+<li><a href="">platformIO IDE</a></li>
+<li><a href=""></a></li>
 </ul>
       </div>
-<!-- /.entry-content -->
-    </section>    
+<!-- /.entry-content 
+      <footer class="post-info text-muted">
+      </footer>-->
+      <!-- /.post-info -->
+    </section>
     </div>
     <!--
     <footer class="footer">
