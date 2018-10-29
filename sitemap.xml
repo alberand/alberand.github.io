@@ -11,6 +11,15 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://alberand.github.io/latex-bootstrap-code.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.github.io/latex-bootstrap-code-ru.html</loc>
+    <priority>0.8</priority>
+  </url>
 
   <url>
     <loc>https://alberand.github.io/pages/about.html</loc>
