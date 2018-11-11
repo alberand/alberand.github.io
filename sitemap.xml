@@ -7,6 +7,11 @@
   </url>
 
   <url>
+    <loc>https://alberand.github.io/toggle-network-on-windows.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://alberand.github.io/host-only-networking-set-up-for-qemu-hypervisor.html</loc>
     <priority>0.8</priority>
   </url>
