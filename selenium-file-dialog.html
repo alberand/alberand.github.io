@@ -4,7 +4,7 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
   <head>
-    <title>Handling file dialog in Selenium testing - Andrey Albershtein</title>
+    <title>Handling file dialog in Selenium tests (Windows & Linux) - Andrey Albershtein</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link href="https://alberand.github.io/theme/bootstrap.css" rel="stylesheet" />
@@ -50,7 +50,7 @@
     <section id="content" class="article content">
       <header>
         <h2 class="entry-title">
-          Handling file dialog in Selenium testing
+          Handling file dialog in Selenium tests (Windows & Linux)
         </h2>
         
         <div class="text-muted" style="float: left; margin-right: 20px;">22.10.2018</div>
@@ -82,7 +82,9 @@ When you choose a file the <em>value</em> attribute changes to the address of yo
 Unfortunately (or not), we can't just change this attribute programmatically.
 It's forbidden due to security reasons. If it was possible we could steal user's
 private data by setting the attribute to some important files (for example,
-system password). So, it is not the way.</p>
+system password). So, it is not the way. There are also some approaches with
+<a href="https://github.com/pywinauto/pywinauto">pywuiauto</a> but it is windows specific
+and differs for particular browsers.</p>
 <h5>Windows Solution - AutoIt</h5>
 <p>After eventually unsuccessful search I find out that there is no way to handle
 file dialog via Selenium. </p>
@@ -97,19 +99,33 @@ AutoIt could be simply compiled into standalone executables. That's awesome! In
 result all you get in addition to your test is a .exe file. The following
 listing shows my script for handling file dialog for three most popular
 browsers:</p>
-<div class="highlight"><pre><span></span>...
+<div class="highlight"><pre><span></span><span class="p">...</span>
+<span class="cp">#include</span> <span class="cpf">&lt;MsgBoxConstants.au3&gt;</span><span class="cp"></span>
 
-; Name of uploading dialog
-;WinActivate(&quot;File Upload&quot;) ; Mozilla Firefox
-;WinActivate(&quot;Open&quot;) ; Google Chrome
-WinActivate(&quot;Choose File to Upload&quot;) ; Internet Explorer
+<span class="n">If</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;chrome&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;edge&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;firefox&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;File Upload&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;ie&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Choose File to Upload&quot;</span>
+<span class="n">Else</span> 
+    <span class="n">MsgBox</span><span class="p">(</span><span class="err">$</span><span class="n">MB_SYSTEMMODAL</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;Unknown browser&quot;</span><span class="p">)</span>
+    <span class="n">Exit</span>
+<span class="n">EndIf</span>
 
-; Path to the file
-send(&quot;C:\UserData\Andrew\Documents\42.txt&quot;)
-Send(&quot;{ENTER}&quot;)
+<span class="p">;</span> <span class="n">Find</span> <span class="n">window</span>
+<span class="nf">WinActivate</span><span class="p">(</span><span class="err">$</span><span class="n">sTitle</span><span class="p">)</span> 
+
+<span class="p">;</span> <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">file</span>
+<span class="nf">Send</span><span class="p">(</span><span class="s">&quot;{ALTDOWN}n{ALTUP}&quot;</span><span class="p">)</span>
+<span class="n">send</span><span class="p">(</span><span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">Send</span><span class="p">(</span><span class="s">&quot;</span><span class="p">{</span><span class="n">ALTDOWN</span><span class="p">}</span><span class="n">O</span><span class="p">{</span><span class="n">ALTUP</span><span class="p">}</span><span class="s">&quot;)</span>
 </pre></div>
 
 
+<p>Run it with two arguments: <code>handler.exe firefox C:/path/to/file.txt</code></p>
 <h5>Linux Solution - xdotool</h5>
 <p>For Linux there exist a tool called <strong>xdotool</strong>. It is similar to AutoIt but it
 only simulate keyboard input, mouse movements and windows manipulation.
@@ -117,6 +133,26 @@ However, it is enough to open file. The following script looks for open file
 dialog for Firefox or Chromium browser, switches to that window, types path to
 the file and press "Open" button (can be done by a shortcut: ALT+O). </p>
 <div class="highlight"><pre><span></span>...
+
+file=&quot;/home/andrew/42.png&quot;
+
+browser=&quot;firefox&quot;
+# browser=&quot;chromium&quot;
+
+if [ &quot;$browser&quot; = &quot;firefox&quot; ]; then
+    win_name=&quot;File Upload&quot;
+fi
+
+if [ &quot;$browser&quot; = &quot;chromium&quot; ]; then
+    win_name=&quot;Open File&quot;
+fi
+
+echo &quot;Looking for the window of the &#39;$browser&#39; browser with name &#39;$win_name&#39;&quot;
+
+# Find window PID
+WIN=$(for pid in $(xdotool search --class &quot;$browser&quot;); do \
+    if [[ $(xdotool getwindowname $pid) == &quot;$win_name&quot; ]]; \
+    then echo $pid; fi; done)
 
 # Switch to the window
 xdotool windowactivate $WIN
