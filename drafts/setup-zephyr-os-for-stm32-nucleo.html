@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <title>Setup Zephyr OS for STM32 Nucleo - Andrey Albershtein</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link href="http://127.0.0.1:8000/theme/bootstrap.css" rel="stylesheet" />
+    <!--<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" rel="stylesheet" />-->
+    <!--<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />-->
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    <link href="http://127.0.0.1:8000/theme/style.css" rel="stylesheet" />
+    <link href="http://127.0.0.1:8000/theme/custom.css" rel="stylesheet" />
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body id="index" class="archive">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="http://127.0.0.1:8000">Andrey Albershtein</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-right">
+          <ul class="nav navbar-nav">
+            <li><a href="http://127.0.0.1:8000/pages/about.html">About</a></li>
+            <li><a href="http://127.0.0.1:8000/tags.html">Tags</a></li>
+
+          </ul>
+
+        </div>
+        <!-- /.navbar-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+    <section id="content" class="article content">
+      <header>
+        <h2 class="entry-title">
+          Setup Zephyr OS for STM32 Nucleo
+        </h2>
+        <div class="text-muted" >
+        
+        </div>
+        <div class="text-muted" style="margin-right: 20px;">28.05.2019</div>
+        <div class="text-muted" style="margin-top: 4px;">
+            <a href="http://127.0.0.1:8000/category/misc.html"><div class="fa fa-lg fa-folder-open"></div> Misc</a>
+            <a href="http://127.0.0.1:8000/tag/stm32.html"><div class="fa fa-lg fa-tag"></div> stm32</a>
+            <a href="http://127.0.0.1:8000/tag/zephyr.html"><div class="fa fa-lg fa-tag"></div> zephyr</a>
+        </div>
+      </header>
+<!-- .entry-content -->
+      <div class="entry-content">
+        <p>A few month ago I get a free STM32 Nucleo board from ST Microelectronics at
+Nuremberg's Embedded World. I was thinking about buying one but didn't have any
+excuse to do it. But as I got one I wanted to try running catching my attention
+and interest new Zephyr real-time operating system.</p>
+<p>I think Zephyr is very nicely design OS with rapidly growing number of features
+and supported boards. Moreover, as I noticed it is under intense development
+with support of Intel corporation.</p>
+<p>In this article I will describe process of setting up development environment
+for STM32 Nucleo platform. (Later I would like to add testing setup to)</p>
+<h4>Environment setup</h4>
+<p>Firstly, lets install Zephyr's <code>west</code> tool. This is basically Python tool to
+help you manage source codes and configuration of your repositories. To install
+it use <code>pip</code> (Python's package manager):</p>
+<div class="highlight"><pre><span></span>pip3 install --user west
+</pre></div>
+
+
+<p>Now we can get zephyr source code:</p>
+<div class="highlight"><pre><span></span>west init stm-testbed
+</pre></div>
+
+
+<p>Next install all the required python packages:</p>
+<div class="highlight"><pre><span></span>cd stm-testbed
+pip3 install --user -r zephyr/scripts/requirements.txt
+</pre></div>
+
+
+<p>Lastly, we need to setup the zephyr-SDK (compilers and tools to build Zephyr).</p>
+<div class="highlight"><pre><span></span>wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.10.0/zephyr-sdk-0.10.0-setup.run
+sh zephyr-sdk-0.10.0-setup.run
+</pre></div>
+
+
+<p>The script will lead you through the installation process. The last thing to do
+is to define two environment variables which will be later used by the Zephyr's
+build system</p>
+<div class="highlight"><pre><span></span>export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+export ZEPHYR_SDK_INSTALL_DIR=&amp;lt;sdk installation directory&amp;gt;
+</pre></div>
+
+
+<p>I also added them to my <code>~/.bashrc</code> to not add them every time. I forgot about
+them a few time and spend too much time looking for such simple problem.</p>
+<h4>Soft simulation</h4>
+<p>Zephyr is ready for compilation. The developers thought about further
+application development and testing so they added support of Qemu as default
+platform. Therefore, you can simulate your application in software.</p>
+<p>Firstly, before building an application, we need to configure environment for
+the Zephyr. Luckily, it is simple. To do this just <code>source</code> the <code>zephyr-env.sh</code>
+script:</p>
+<div class="highlight"><pre><span></span>cd zephyr
+source zephyr-env.sh
+</pre></div>
+
+
+<p>Next let's run provided <code>hello_world</code> application. Go to the following
+directory and create <code>build</code> directory:</p>
+<div class="highlight"><pre><span></span>cd zephyr/samples/hello_world/
+mkdir build &amp;amp;&amp;amp; cd build
+</pre></div>
+
+
+<p>Now we will use <code>cmake</code> to prepare application for build (create cmake cache).
+As we want to run application in Qemu we need to tell about it with defining
+variable <code>BOARD</code> (with -D argument to the cmake):</p>
+<div class="highlight"><pre><span></span>cmake -GNinja -DBOARD=qemu_x86 ..
+</pre></div>
+
+
+<p>The <code>-GNunja</code> arguments tells <code>cmake</code> that we will build our application with
+Ninja building system. The last <code>..</code> is just path to the upper directory. Then,
+build and run it with <code>ninja</code>:</p>
+<div class="highlight"><pre><span></span>ninja
+ninja run
+</pre></div>
+
+
+<p>You should see something similar:</p>
+<div class="highlight"><pre><span></span>SeaBIOS (version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org)
+Booting from ROM..***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+Hello World! qemu_x86
+</pre></div>
+
+
+<p>The last line is our application. Hurray!</p>
+<p><strong>Note:</strong> To exit from Qemu press <code>CTRL + A</code> and then <code>X</code></p>
+<h4>Compiling and running example</h4>
+<p>Remove generated <code>CMakeCache.txt</code></p>
+<div class="highlight"><pre><span></span>rm CMakeCache.txt
+</pre></div>
+
+
+<p>Prepare build system</p>
+<div class="highlight"><pre><span></span>cmake -GNinja -DBOARD=nucleo_l073rz ..
+</pre></div>
+
+
+<p>Connect your board to the PC
+Compile and flash application to the board</p>
+<div class="highlight"><pre><span></span>ninja
+ninja flash
+</pre></div>
+
+
+<p>Run some serial monitor at <code>/dev/ttyACM0</code>, <code>115200 8N1</code>. I use <code>minicom</code></p>
+<div class="highlight"><pre><span></span>sudo minicom -s
+</pre></div>
+
+
+<p>Press reset button and you should see message on serial terminal</p>
+<div class="highlight"><pre><span></span>***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+Hello World! nucleo_l073rz
+</pre></div>
+
+
+<h4>Future improvements</h4>
+<ul>
+<li>testing</li>
+</ul>
+<h4>References</h4>
+<ul>
+<li><a href="https://www.zephyrproject.org/">Zephur RTOS</a></li>
+<li><a href="https://www.st.com/en/evaluation-tools/nucleo-l010rb.html">STM32 Nucleo (STM32L010RB)</a></li>
+<li><a href="https://www.qemu.org/">QEMU - processor emulator</a></li>
+<li><a href="https://ninja-build.org/">Ninja Build System</a></li>
+<li><a href="https://www.embedded-world.de/en">Embedded World - Nuremberg, Germany</a></li>
+</ul>
+      </div>
+<!-- /.entry-content 
+      <footer class="post-info text-muted">
+      </footer>-->
+      <!-- /.post-info -->
+    </section>
+    <hr />
+    <div style="text-align: center;">
+        For comments, please send me an 
+        <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+            target="_top">email</a>, or contact me on
+        <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+    </div>
+    </div>
+    <!--
+    <footer class="footer">
+      <div class="container">
+        <p class="footer-text">&copy; <a href="http://127.0.0.1:8000">Andrey Albershtein</a> powered by <a href="http://getpelican.com/">pelican</a></p>
+      </div>
+    </footer>
+    //-->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  </body>
+</html>

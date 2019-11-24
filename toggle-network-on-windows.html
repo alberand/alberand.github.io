@@ -4,7 +4,7 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
   <head>
-    <title>Disconnect Windows from the internet - Andrey Albershtein</title>
+    <title>Toggling internet connection on Windows - Andrey Albershtein</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <link href="https://alberand.github.io/theme/bootstrap.css" rel="stylesheet" />
@@ -50,55 +50,55 @@
     <section id="content" class="article content">
       <header>
         <h2 class="entry-title">
-          Disconnect Windows from the internet
+          Toggling internet connection on Windows
         </h2>
         <div class="text-muted" >
         
         </div>
         <div class="text-muted" style="margin-right: 20px;">11.11.2018</div>
-        <div class="text-muted" style="margin-top: 4px;">
-            <a href="https://alberand.github.io/category/scripts.html"><div class="fa fa-lg fa-folder-open"></div> scripts</a>
+        <!-- <div class="text-muted" style="margin-top: 4px;">
+            <a href="https://alberand.github.io/category/article.html"><div class="fa fa-lg fa-folder-open"></div> Article</a>
             <a href="https://alberand.github.io/tag/windows.html"><div class="fa fa-lg fa-tag"></div> Windows</a>
             <a href="https://alberand.github.io/tag/networking.html"><div class="fa fa-lg fa-tag"></div> networking</a>
-        </div>
+        </div> -->
       </header>
 <!-- .entry-content -->
       <div class="entry-content">
-        <p>One time I was testing a JavaScript application with an offline mode. That
-application was running in browser and was communicating with a server. </p>
+        <p>One time I was testing a JavaScript application which had an offline mode. That
+application was running in browser and was communicating with a remote server. </p>
 <p>I wanted to test it in offline mode. By that I mean loading an application and
-imitating network break down. In the Google Chrome you can do it easily
-from Developer console. However, in Mozilla Firefox and Internet Explorer it is
-much harder; at least I didn't find a functionality for this. Moreover, as I
-use it in Selenium tests I wanted a solution which is browser independent and
-can be fully automatic.</p>
-<p>I decide to disable internet connection on the level of the operating system
-(Windows) as it definitely would work for everything. The most straightforward
-way is to just disable network interface. But, I find out that it requires
-administrator privileges which aren't granted when you run it from other program
-without privileges. And, of course, it's not a good idea to run your tests as an
+imitating network disconnection. In the Google Chrome you can do it easily
+from the Developer console. However, in Mozilla Firefox and Internet Explorer it
+is much harder; at least I didn't find any functionality for this. Moreover, as
+I use it in Selenium tests I wanted a solution which is browser independent and
+can be fully automated.</p>
+<p>I decide to disable internet connection on the operating system level (Windows)
+as it definitely would work for everything. The most straightforward way is to
+just disable network interface. But, I find out that it requires administrator
+privileges which aren't granted when you run it from other program without
+privileges. And, of course, it's not a good idea to run your tests as an
 administrator.</p>
-<h5>Solution</h5>
+<h4>Solution</h4>
 <p>In Windows you can create system task which in turn runs script to disable
 network. As this script is run by system task it has all required privileges.</p>
-<div class="highlight"><pre><span></span>SET interface=&quot;Ethernet&quot;
+<div class="highlight"><pre><span></span><span class="nv">SET</span> <span class="nv">interface</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">Ethernet</span><span class="s2">&quot;</span>
 
-netsh interface show interface name=%interface% | findstr ^
-    /R /C:&quot;Administrative state:&quot; | findstr /C:&quot;Enabled&quot;
+<span class="nv">netsh</span> <span class="nv">interface</span> <span class="k">show</span> <span class="nv">interface</span> <span class="nv">name</span><span class="o">=%</span><span class="nv">interface</span><span class="o">%</span> <span class="o">|</span> <span class="nv">findstr</span> <span class="o">^</span>
+    <span class="o">/</span><span class="nv">R</span> <span class="o">/</span><span class="nv">C</span>:<span class="s2">&quot;</span><span class="s">Administrative state:</span><span class="s2">&quot;</span> <span class="o">|</span> <span class="nv">findstr</span> <span class="o">/</span><span class="nv">C</span>:<span class="s2">&quot;</span><span class="s">Enabled</span><span class="s2">&quot;</span>
 
-if %errorlevel%==1 (
-    echo Disabled
-    netsh interface set interface name=%interface% admin=Enabled
-) else (
-    echo Enabled
-    netsh interface set interface name=%interface% admin=Disabled
-)
+<span class="k">if</span> <span class="o">%</span><span class="nv">errorlevel</span><span class="o">%==</span><span class="mi">1</span> <span class="ss">(</span>
+    <span class="nv">echo</span> <span class="nv">Disabled</span>
+    <span class="nv">netsh</span> <span class="nv">interface</span> <span class="nv">set</span> <span class="nv">interface</span> <span class="nv">name</span><span class="o">=%</span><span class="nv">interface</span><span class="o">%</span> <span class="nv">admin</span><span class="o">=</span><span class="nv">Enabled</span>
+<span class="ss">)</span> <span class="k">else</span> <span class="ss">(</span>
+    <span class="nv">echo</span> <span class="nv">Enabled</span>
+    <span class="nv">netsh</span> <span class="nv">interface</span> <span class="nv">set</span> <span class="nv">interface</span> <span class="nv">name</span><span class="o">=%</span><span class="nv">interface</span><span class="o">%</span> <span class="nv">admin</span><span class="o">=</span><span class="nv">Disabled</span>
+<span class="ss">)</span>
 </pre></div>
 
 
 <p>Put it somewhere near your tests and set it up as follows:</p>
 <ol>
-<li>Set correct name of your Ethernet interface (in script)</li>
+<li>Change <code>interface</code> to name of your Ethernet interface (in script)</li>
 <li>Open "Task Scheduler"</li>
 <li>Click "Create Task"</li>
 <li>Set name of the task to "toggle_connection"</li>
@@ -108,7 +108,7 @@ if %errorlevel%==1 (
 </ol>
 <p>That's all! Now you can toggle your internet connection from Command prompt by
 this command:</p>
-<div class="highlight"><pre><span></span>schtasks /Run /TN toggle_connection
+<div class="highlight"><pre><span></span><span class="n">schtasks</span> <span class="o">/</span><span class="n">Run</span> <span class="o">/</span><span class="n">TN</span> <span class="n">toggle_connection</span>
 </pre></div>
 
 

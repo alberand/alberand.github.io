@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <title>Over the air updates for Arduino with Bluetooth - Andrey Albershtein</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link href="https://alberand.github.io/theme/bootstrap.css" rel="stylesheet" />
+    <!--<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" rel="stylesheet" />-->
+    <!--<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />-->
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    <link href="https://alberand.github.io/theme/style.css" rel="stylesheet" />
+    <link href="https://alberand.github.io/theme/custom.css" rel="stylesheet" />
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body id="index" class="archive">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="https://alberand.github.io">Andrey Albershtein</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-right">
+          <ul class="nav navbar-nav">
+            <li><a href="https://alberand.github.io/pages/about.html">About</a></li>
+            <li><a href="https://alberand.github.io/tags.html">Tags</a></li>
+
+          </ul>
+
+        </div>
+        <!-- /.navbar-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+    <section id="content" class="article content">
+      <header>
+        <h2 class="entry-title">
+          Over the air updates for Arduino with Bluetooth
+        </h2>
+        <div class="text-muted" >
+        
+        </div>
+        <div class="text-muted" style="margin-right: 20px;">06.09.2019</div>
+        <!-- <div class="text-muted" style="margin-top: 4px;">
+            <a href="https://alberand.github.io/category/article.html"><div class="fa fa-lg fa-folder-open"></div> Article</a>
+        </div> -->
+      </header>
+<!-- .entry-content -->
+      <div class="entry-content">
+        <p>For one of my project I wanted to implement so called over the air (or shortly
+OTA) updates of firmware. It means instead of using USB cable you use one of the
+wireless technologies to upload your programs. In my case I used Bluetooth, in
+particular cheap Chinese HC-05 chip.</p>
+<p><strong>Writing to memory</strong>. The principle is quite simple. But first let's look at
+the booting process.  When you power on your microcontroller it starts to
+execute application stored in the internal flash memory. If we put our compiled
+application into this memory it will be executed. The SPI interface is a how you
+can rewrite this memory. However, it is not very convenient to use SPI every
+time you want to upload new program. It would nice if we could use serial link
+(UART) as it is simple and can be found almost everywhere.</p>
+<p><strong>The bootloader</strong>. It is simple application which is always stored in the
+flash memory of microcontroller and being executed first. When you power on
+your Arduino it actually start to execute bootloader. The latter, in turn,
+monitor serial link (or possibly any other communication interface) if there are
+any incoming data or commands. In the simplest case we sent a command which
+tells bootloader to store any further incoming bytes into memory and start to
+transmit our application. The communication protocol is actually much more
+complicated [STK500][STK500].</p>
+<p><strong>Serial link</strong>. On most of the Arduinos there is USB to UART controller which
+give us possibility to talk to the microcontroller via the USB port. But
+basically we can connect our microcontroller to any serial interface. So, how we
+can exploit it? The HC-05 is a small PCB module which can be used as Bluetooth
+to USB controller. In other words on the one end there is PC/Phone with
+Bluetooth and on the other end serial link connected to the MCU.</p>
+<p><strong>My solution</strong>. There are some articles about implementation of the over the
+air updates based on combination of Arduino and HC-05. My realization don't need
+any physical modification of the HC-05 and it requires pressing a reset button
+before uploading new firmware. I see it as a security features (not a
+restriction =)) as to upload firmware to the device you need physical access to
+it.</p>
+<h4>Introduction</h4>
+<p>The principle is following - Arduino is connected to the Bluetooth module. When
+you want to update firmware you connect to the HC-05 from your PC. After
+pressing reset button bootloader waits for data on UART. Arduino IDE writes data
+to the Bluetooth port. Bootloader reads it and saves to the memory.</p>
+<p><strong>Timeout</strong>. Normally, the bootloader don't wait infinitely long for the
+commands from the PC. It has some timeout after which bootloader gave control
+(runs) anything that is already in the memory. This timeout is quite short and
+there comes a problem. The connection process of the HC-05 module and PC take
+a few seconds </p>
+<p>The problem is that preprogrammed Arduino's bootloader is quite fast. I mean the
+timeout for which it waits for the data is quite short. So, the first step will
+be to modify bootloader.</p>
+<p>Next we need configure Arduino and HC-05 module to correctly communicate between
+each other. As it is standard serial link our modified bootloader should have
+correct baud rate to communicate with the module.</p>
+<h4>Setup</h4>
+<p>My setup consist of Arduino Nano, HC-05 bluetooth module and I used Arduino Mega
+2560. The latter is used for uploading bootloader into the Nano and configuring
+Bluetooth module. </p>
+<p><a href="./image/ota_scheme.png"></a></p>
+<h4>Modifying bootloader</h4>
+<p>I decided to try one the popular bootloader with lot of useful features -
+optiboot. As I discovered latter it already has implemented different timeouts.
+So, one task is done. Next step is to understand the project compile it and
+modify if necessary.</p>
+<p>After tweaking around a lit bit I successfully compiled it for ATMega328p with
+<code>make atmega328</code>. </p>
+<p>The default baudrate set in the bootloader is <code>115200</code>. Therefore, our HC-05
+should all talk on this rate.</p>
+<h4>Uploading new bootloader</h4>
+<p>The uploading process was a little bit tricky because all of my wires,
+breadboards and Arduinos are from cheap Chinese manufactures their quality is
+quite near to very bad. The main problem was contact between wires as they had
+glue on the metallic end. So, if something doesn't work for you try to move
+around with those wires - it can be a problem.</p>
+<p>The first step to do is to take another Arduino and upload Arduion ISP sketch
+from the standard set of examples. This application turns your Arduino into
+programmer. </p>
+<p>The principle is following - the programming Arduino is connected to the PC. The
+ISP interface of this Arduino connects to the ICSP (those six pin put aside) of
+the Arduino we want to program.</p>
+<p>It also use three digital pins to indicate programming </p>
+<h4>Configuring HC-05 module</h4>
+<p>The module has two modes one in which we can use AT commands to configure it and
+one for normal operation. We want the first one. First you need another Arduino
+which will be middleware between PC and HC-05. I used Arduino MEGA 2560 as it
+has three hardware UARTs and can simultaneously talk to two or more devices.
+However, you can use any Arduino as there is library called <SoftwareSerial.h>
+which allows you to create additional serial ports on most of the pins.</p>
+<p>Most probably you will need to play a little bit with baud rate. In my module
+default one is 38400 but I think I saw modules with 57600. So, configure your
+communication in such a way that you have the same baud rate on both end of the
+communication. Otherwise, it will be quite easy to get lost in all those
+baudrates.</p>
+<p>The following sequence of commands check version of the HC-05 module, switch
+module to the slave mode and sets baudrate to <code>115200</code>/1 stop bin/no parity.</p>
+<div class="highlight"><pre><span></span><span class="k">AT</span>
+<span class="o">&gt;</span> <span class="n">OK</span>
+<span class="k">AT</span><span class="o">+</span><span class="k">VERSION</span><span class="o">?</span>
+<span class="o">&gt;</span> <span class="o">+</span><span class="k">VERSION</span><span class="p">:</span><span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="o">-</span><span class="mi">20100601</span>
+<span class="k">AT</span><span class="o">+</span><span class="k">ROLE</span><span class="o">=</span><span class="mi">0</span>
+<span class="o">&gt;</span> <span class="n">OK</span>
+<span class="k">AT</span><span class="o">+</span><span class="n">UART</span><span class="p">:</span><span class="mi">115200</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span>
+<span class="o">&gt;</span> <span class="n">OK</span>
+<span class="k">AT</span><span class="o">+</span><span class="n">UART</span><span class="o">?</span>
+<span class="o">&gt;</span> <span class="o">+</span><span class="n">UART</span><span class="p">:</span><span class="mi">115200</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span>
+<span class="o">&gt;</span> <span class="n">OK</span>
+</pre></div>
+
+
+<h4>Test Bluetooth communication</h4>
+<h4>Future Work</h4>
+<p>Updating firmware with overwriting the old one is a bad practice. If
+communication is not reliable or device unexpectedly turns off your firmware
+becomes unusable. The better way is to use external memory chip (or internal
+memory if your application is small) and, firstly, write firmware at the
+external memory and then copy and run it.</p>
+<p>One of the bootloader which allows this is DualOptiboot. I am planning to try
+this one in the next version of my Bluetooth controller. The first step will be
+to choose some memory chip and add it to the board.</p>
+<h4>References</h4>
+<ul>
+<li><a href="">HC-05</a></li>
+<li><a href="https://github.com/Optiboot/optiboot">Optiboot</a></li>
+<li><a href="https://github.com/LowPowerLab/DualOptiboot">DialOptiboot</a></li>
+<li><a href="http://ww1.microchip.com/downloads/en/Appnotes/doc2591.pdf">STK500</a></li>
+</ul>
+      </div>
+<!-- /.entry-content 
+      <footer class="post-info text-muted">
+      </footer>-->
+      <!-- /.post-info -->
+    </section>
+    <hr />
+    <div style="text-align: center;">
+        For comments, please send me an 
+        <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+            target="_top">email</a>, or contact me on
+        <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+    </div>
+    </div>
+    <!--
+    <footer class="footer">
+      <div class="container">
+        <p class="footer-text">&copy; <a href="https://alberand.github.io">Andrey Albershtein</a> powered by <a href="http://getpelican.com/">pelican</a></p>
+      </div>
+    </footer>
+    //-->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

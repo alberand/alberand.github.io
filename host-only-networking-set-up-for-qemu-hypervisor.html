@@ -56,12 +56,12 @@
         
         </div>
         <div class="text-muted" style="margin-right: 20px;">24.03.2017</div>
-        <div class="text-muted" style="margin-top: 4px;">
-            <a href="https://alberand.github.io/category/tools-networking.html"><div class="fa fa-lg fa-folder-open"></div> tools, networking</a>
+        <!-- <div class="text-muted" style="margin-top: 4px;">
+            <a href="https://alberand.github.io/category/article.html"><div class="fa fa-lg fa-folder-open"></div> Article</a>
             <a href="https://alberand.github.io/tag/qemu.html"><div class="fa fa-lg fa-tag"></div> qemu</a>
             <a href="https://alberand.github.io/tag/linux.html"><div class="fa fa-lg fa-tag"></div> linux</a>
             <a href="https://alberand.github.io/tag/networking.html"><div class="fa fa-lg fa-tag"></div> networking</a>
-        </div>
+        </div> -->
       </header>
 <!-- .entry-content -->
       <div class="entry-content">
@@ -123,12 +123,12 @@ MAC address:</p>
 
 
 <p>Assign static IP address to the guest system:</p>
-<div class="highlight"><pre><span></span>ip addr add 192.168.100.224/24 broadcast 192.168.100.255 dev eth0
+<div class="highlight"><pre><span></span><span class="n">ip</span> <span class="n">addr</span> <span class="k">add</span> <span class="mi">192</span><span class="p">.</span><span class="mi">168</span><span class="p">.</span><span class="mi">100</span><span class="p">.</span><span class="mi">224</span><span class="o">/</span><span class="mi">24</span> <span class="n">broadcast</span> <span class="mi">192</span><span class="p">.</span><span class="mi">168</span><span class="p">.</span><span class="mi">100</span><span class="p">.</span><span class="mi">255</span> <span class="n">dev</span> <span class="n">eth0</span>
 </pre></div>
 
 
 <p>Don't forget to add root password:</p>
-<div class="highlight"><pre><span></span>passwd
+<div class="highlight"><pre><span></span><span class="n">passwd</span>
 </pre></div>
 
 
