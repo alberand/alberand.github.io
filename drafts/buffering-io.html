@@ -68,22 +68,21 @@
 <figure class='code'>
 <figcaption>
 
-<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<pre><code>:::c
+#include &lt;unistd.h&gt;
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+int main(){
+    int rc = 1;
+    int c = read(0, &amp;c, 1);
 
-    <span class="k">while</span><span class="p">(</span><span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
-        <span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
+    while(rc &gt; 0){
+        write(1, &amp;c, 1);
+        rc = read(0, &amp;c, 1);
+    }
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
+    return 0;
+}
+</code></pre>
 </figure>
       </div>
 <!-- /.entry-content 

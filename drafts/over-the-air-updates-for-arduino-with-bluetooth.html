@@ -150,19 +150,18 @@ communication. Otherwise, it will be quite easy to get lost in all those
 baudrates.</p>
 <p>The following sequence of commands check version of the HC-05 module, switch
 module to the slave mode and sets baudrate to <code>115200</code>/1 stop bin/no parity.</p>
-<div class="highlight"><pre><span></span><span class="k">AT</span>
-<span class="o">&gt;</span> <span class="n">OK</span>
-<span class="k">AT</span><span class="o">+</span><span class="k">VERSION</span><span class="o">?</span>
-<span class="o">&gt;</span> <span class="o">+</span><span class="k">VERSION</span><span class="p">:</span><span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="o">-</span><span class="mi">20100601</span>
-<span class="k">AT</span><span class="o">+</span><span class="k">ROLE</span><span class="o">=</span><span class="mi">0</span>
-<span class="o">&gt;</span> <span class="n">OK</span>
-<span class="k">AT</span><span class="o">+</span><span class="n">UART</span><span class="p">:</span><span class="mi">115200</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span>
-<span class="o">&gt;</span> <span class="n">OK</span>
-<span class="k">AT</span><span class="o">+</span><span class="n">UART</span><span class="o">?</span>
-<span class="o">&gt;</span> <span class="o">+</span><span class="n">UART</span><span class="p">:</span><span class="mi">115200</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span>
-<span class="o">&gt;</span> <span class="n">OK</span>
-</pre></div>
-
+<pre><code>AT
+&gt; OK
+AT+VERSION?
+&gt; +VERSION:2.0-20100601
+AT+ROLE=0
+&gt; OK
+AT+UART:115200,1,0
+&gt; OK
+AT+UART?
+&gt; +UART:115200,1,0
+&gt; OK
+</code></pre>
 
 <h4>Test Bluetooth communication</h4>
 <h4>Future Work</h4>
