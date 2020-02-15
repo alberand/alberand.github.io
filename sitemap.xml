@@ -2,12 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://alberand.github.io/weak-directive.html</loc>
+    <loc>https://alberand.github.io/setup-zephyr-os-for-stm32-nucleo.html</loc>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://alberand.github.io/setup-zephyr-os-for-stm32-nucleo.html</loc>
+    <loc>https://alberand.github.io/weak-directive.html</loc>
     <priority>0.8</priority>
   </url>
 
