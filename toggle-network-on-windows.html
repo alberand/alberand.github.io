@@ -81,19 +81,20 @@ administrator.</p>
 <h4>Solution</h4>
 <p>In Windows you can create system task which in turn runs script to disable
 network. As this script is run by system task it has all required privileges.</p>
-<pre><code>SET interface=&quot;Ethernet&quot;
+<div class="highlight"><pre><span></span><span class="k">SET</span> <span class="n">interface</span><span class="o">=</span><span class="ss">&quot;Ethernet&quot;</span>
 
-netsh interface show interface name=%interface% | findstr ^
-    /R /C:&quot;Administrative state:&quot; | findstr /C:&quot;Enabled&quot;
+<span class="n">netsh</span> <span class="n">interface</span> <span class="k">show</span> <span class="n">interface</span> <span class="n">name</span><span class="o">=%</span><span class="n">interface</span><span class="o">%</span> <span class="o">|</span> <span class="n">findstr</span> <span class="o">^</span>
+    <span class="o">/</span><span class="n">R</span> <span class="o">/</span><span class="k">C</span><span class="p">:</span><span class="ss">&quot;Administrative state:&quot;</span> <span class="o">|</span> <span class="n">findstr</span> <span class="o">/</span><span class="k">C</span><span class="p">:</span><span class="ss">&quot;Enabled&quot;</span>
 
-if %errorlevel%==1 (
-    echo Disabled
-    netsh interface set interface name=%interface% admin=Enabled
-) else (
-    echo Enabled
-    netsh interface set interface name=%interface% admin=Disabled
-)
-</code></pre>
+<span class="k">if</span> <span class="o">%</span><span class="n">errorlevel</span><span class="o">%==</span><span class="mi">1</span> <span class="p">(</span>
+    <span class="n">echo</span> <span class="n">Disabled</span>
+    <span class="n">netsh</span> <span class="n">interface</span> <span class="k">set</span> <span class="n">interface</span> <span class="n">name</span><span class="o">=%</span><span class="n">interface</span><span class="o">%</span> <span class="k">admin</span><span class="o">=</span><span class="n">Enabled</span>
+<span class="p">)</span> <span class="k">else</span> <span class="p">(</span>
+    <span class="n">echo</span> <span class="n">Enabled</span>
+    <span class="n">netsh</span> <span class="n">interface</span> <span class="k">set</span> <span class="n">interface</span> <span class="n">name</span><span class="o">=%</span><span class="n">interface</span><span class="o">%</span> <span class="k">admin</span><span class="o">=</span><span class="n">Disabled</span>
+<span class="p">)</span>
+</pre></div>
+
 
 <p>Put it somewhere near your tests and set it up as follows:</p>
 <ol>
@@ -107,8 +108,10 @@ if %errorlevel%==1 (
 </ol>
 <p>That's all! Now you can toggle your internet connection from Command prompt by
 this command:</p>
-<pre><code>schtasks /Run /TN toggle_connection
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">schtasks /Run /TN toggle_connection</span>
+</pre></div>
+
+
 <p>Now, you can run this as system command from your program (in my case it is
 Python script) to toggle network connection.</p>
 <div style="width:300px; text-align:center; margin: 0 auto;">

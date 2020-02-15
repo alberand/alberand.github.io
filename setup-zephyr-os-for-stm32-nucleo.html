@@ -82,11 +82,12 @@ for STM32 Nucleo platform with Zephyr OS. (Later I would like to add testing
 setup too)</p>
 <h4>Environment setup</h4>
 <p>Firstly, install dependencies:</p>
-<pre><code class="shell">    $ sudo apt install --no-install-recommends git cmake ninja-build gperf \
-        ccache dfu-util device-tree-compiler wget \
-        python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
+<div class="highlight"><pre><span></span>    $ sudo apt install --no-install-recommends git cmake ninja-build gperf <span class="se">\</span>
+        ccache dfu-util device-tree-compiler wget <span class="se">\</span>
+        python3-pip python3-setuptools python3-tk python3-wheel xz-utils file <span class="se">\</span>
         make gcc gcc-multilib g++-multilib libsdl2-dev
-</code></pre>
+</pre></div>
+
 
 <p class="note-right">
 Commonly used notation for shell commands is <code>$</code> - commands executed
@@ -96,32 +97,37 @@ by normal user and <code>#</code> commands executed as root
 <p>Then, install Zephyr's <code>west</code> tool. This is basically Python utility to help you
 manage source codes and configuration of your repositories. To install it use
 <code>pip</code> (Python's package manager):</p>
-<pre><code class="shell">    $ pip3 install --user west
-    $ echo 'export PATH=~/.local/bin:&quot;$PATH&quot;' &gt;&gt; ~/.bashrc
-    $ source ~/.bashrc
-</code></pre>
+<div class="highlight"><pre><span></span>    $ pip3 install --user west
+    $ <span class="nb">echo</span> <span class="s1">&#39;export PATH=~/.local/bin:&quot;$PATH&quot;&#39;</span> &gt;&gt; ~/.bashrc
+    $ <span class="nb">source</span> ~/.bashrc
+</pre></div>
+
 
 <p>Now we can get zephyr source code (it will take sometime ~ 300 Mb):</p>
-<pre><code class="shell">    $ west init stm-testbed
-</code></pre>
+<div class="highlight"><pre><span></span>    $ west init stm-testbed
+</pre></div>
+
 
 <p>Next update all submodules and install all the required python packages:</p>
-<pre><code class="shell">    $ cd stm-testbed
+<div class="highlight"><pre><span></span>    $ <span class="nb">cd</span> stm-testbed
     $ west update
     $ pip3 install --user -r zephyr/scripts/requirements.txt
-</code></pre>
+</pre></div>
+
 
 <p>Lastly, we need to setup the zephyr-SDK (compilers and tools to build Zephyr).</p>
-<pre><code class="shell">    $ wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.11.1/zephyr-sdk-0.11.1-setup.run
+<div class="highlight"><pre><span></span>    $ wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.11.1/zephyr-sdk-0.11.1-setup.run
     $ sh zephyr-sdk-0.10.0-setup.run
-</code></pre>
+</pre></div>
+
 
 <p>The script will lead you through the installation process. The last thing to do
 is to define two environment variables which will be later used by the Zephyr's
 build system</p>
-<pre><code class="shell">    $ export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-    $ export ZEPHYR_SDK_INSTALL_DIR=&lt;sdk installation directory&gt;
-</code></pre>
+<div class="highlight"><pre><span></span>    $ <span class="nb">export</span> <span class="nv">ZEPHYR_TOOLCHAIN_VARIANT</span><span class="o">=</span>zephyr
+    $ <span class="nb">export</span> <span class="nv">ZEPHYR_SDK_INSTALL_DIR</span><span class="o">=</span>&lt;sdk installation directory&gt;
+</pre></div>
+
 
 <p>I also added them to my <code>~/.bashrc</code> to not export them every time. I forgot to
 do it a few times and spend too much time looking for such a simple problem.</p>
@@ -133,34 +139,39 @@ start to play with the system API.</p>
 <p>Firstly, before building an application, we need to configure environment for
 the Zephyr. Luckily, it is simple. To do this just <code>source</code> the <code>zephyr-env.sh</code>
 script:</p>
-<pre><code class="shell">    $ cd stm-testbed/zephyr
-    $ source zephyr-env.sh
-</code></pre>
+<div class="highlight"><pre><span></span>    $ <span class="nb">cd</span> stm-testbed/zephyr
+    $ <span class="nb">source</span> zephyr-env.sh
+</pre></div>
+
 
 <p>Next, let's run provided <code>hello_world</code> application. Go to the following
 directory and create <code>build</code> directory:</p>
-<pre><code class="shell">    $ cd samples/hello_world/
-    $ mkdir build &amp;&amp; cd build
-</code></pre>
+<div class="highlight"><pre><span></span>    $ <span class="nb">cd</span> samples/hello_world/
+    $ mkdir build <span class="o">&amp;&amp;</span> <span class="nb">cd</span> build
+</pre></div>
+
 
 <p>Now we will use <code>cmake</code> to prepare application for build (create <code>cmake</code> cache
 file). As we want to run application in <code>Qemu</code> we need to tell <code>cmake</code> about it
 with defining variable <code>BOARD</code> (with -D flag):</p>
-<pre><code class="shell">    $ cmake -GNinja -DBOARD=qemu_x86 ..
-</code></pre>
+<div class="highlight"><pre><span></span>    $ cmake -GNinja -DBOARD<span class="o">=</span>qemu_x86 ..
+</pre></div>
+
 
 <p>The <code>-GNunja</code> arguments tells <code>cmake</code> that later we will build our application
 with <a href="https://ninja-build.org/">Ninja</a> building system. The last <code>..</code> is just path to the upper
 directory.  Then, build and run it with <code>ninja</code>:</p>
-<pre><code class="shell">    $ ninja
+<div class="highlight"><pre><span></span>    $ ninja
     $ ninja run
-</code></pre>
+</pre></div>
+
 
 <p>You should see something similar:</p>
-<pre><code class="shell">    SeaBIOS (version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org)
+<div class="highlight"><pre><span></span>    SeaBIOS <span class="o">(</span>version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org<span class="o">)</span>
     Booting from ROM..***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
     Hello World! qemu_x86
-</code></pre>
+</pre></div>
+
 
 <p>The last line is our application. Hurray!</p>
 <p class="note-left">
@@ -170,25 +181,29 @@ To exit from Qemu press <code>CTRL + A</code> and then <code>X</code>
 <h4>Compiling and running example</h4>
 <p>Now let's try it on the real hardware. Clean the build directory and
 re-generate cmake cache for your STM32 board.</p>
-<pre><code class="shell">    $ ninja clean
-    $ cmake -GNinja -DBOARD=nucleo_l073rz ..
-</code></pre>
+<div class="highlight"><pre><span></span>    $ ninja clean
+    $ cmake -GNinja -DBOARD<span class="o">=</span>nucleo_l073rz ..
+</pre></div>
+
 
 <p>Connect your board to the PC and check that it appeard in the <code>/dev</code> directory
 (mine is <code>/dev/ttyACM0</code>). Compile and flash application to the board:</p>
-<pre><code class="shell">    $ ninja
+<div class="highlight"><pre><span></span>    $ ninja
     $ ninja flash
-</code></pre>
+</pre></div>
+
 
 <p>Run some serial monitor at <code>/dev/ttyACM0</code>, <code>115200 8N1</code> to check if firmware was
 correctly uploaded. I use <code>minicom</code>:</p>
-<pre><code class="shell">    $ sudo minicom -s
-</code></pre>
+<div class="highlight"><pre><span></span>    $ sudo minicom -s
+</pre></div>
+
 
 <p>Press reset button on the DevKit and you should see similar message:</p>
-<pre><code class="shell">    ***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+<div class="highlight"><pre><span></span>    ***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
     Hello World! nucleo_l073rz
-</code></pre>
+</pre></div>
+
 
 <h4>Creating custom application</h4>
 <p>In Zephyr world the build system is application-centric. That means that your
@@ -199,21 +214,23 @@ library. I suppose that they choose this way to simplify the process of
 configuration management and building process kernel with integrated.</p>
 <p>As an examples let's create simple application based on blinky example. First of
 all create working directory and <code>cmake</code> project file:</p>
-<pre><code class="shell">$ mkdir app &amp;&amp; cd app
+<div class="highlight"><pre><span></span>$ mkdir app <span class="o">&amp;&amp;</span> <span class="nb">cd</span> app
 $ mkdir src
 $ touch CMakeLists.txt
-</code></pre>
+</pre></div>
+
 
 <p>Put the following configuration into the <code>CMakeList.txt</code>:</p>
-<pre><code class="shell"># Boilerplate code, which pulls in the Zephyr build system.
-cmake_minimum_required(VERSION 3.13.1)
-include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
-project(my_zephyr_app)
+<div class="highlight"><pre><span></span><span class="c1"># Boilerplate code, which pulls in the Zephyr build system.</span>
+cmake_minimum_required<span class="o">(</span>VERSION <span class="m">3</span>.13.1<span class="o">)</span>
+include<span class="o">(</span><span class="nv">$ENV</span><span class="o">{</span>ZEPHYR_BASE<span class="o">}</span>/cmake/app/boilerplate.cmake NO_POLICY_SCOPE<span class="o">)</span>
+project<span class="o">(</span>my_zephyr_app<span class="o">)</span>
 
-# Add your source file to the &quot;app&quot; target. This must come after
-# the boilerplate code, which defines the target.
-target_sources(app PRIVATE src/main.c)
-</code></pre>
+<span class="c1"># Add your source file to the &quot;app&quot; target. This must come after</span>
+<span class="c1"># the boilerplate code, which defines the target.</span>
+target_sources<span class="o">(</span>app PRIVATE src/main.c<span class="o">)</span>
+</pre></div>
+
 
 <p>Then copy source code of provided blinky example. Go back to the <code>zephyr</code>
 folder and then take <code>samples/basic/blinky/src/main.c</code> and copy it <code>main.c</code>.</p>

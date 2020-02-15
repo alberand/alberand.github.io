@@ -100,30 +100,31 @@ AutoIt could be simply compiled into standalone executables. That's super
 convenient! In result all you get in addition to your test is a <code>.exe</code> file. The
 following listing shows my script for handling file dialog for the most
 popular browsers:</p>
-<pre><code>...
-#include &lt;MsgBoxConstants.au3&gt;
+<div class="highlight"><pre><span></span><span class="p">...</span>
+<span class="cp">#include</span> <span class="cpf">&lt;MsgBoxConstants.au3&gt;</span><span class="cp"></span>
 
-If $CmdLine[1] == &quot;chrome&quot; Then
-    $sTitle = &quot;Open&quot;
-ElseIf $CmdLine[1] == &quot;edge&quot; Then
-    $sTitle = &quot;Open&quot;
-ElseIf $CmdLine[1] == &quot;firefox&quot; Then
-    $sTitle = &quot;File Upload&quot;
-ElseIf $CmdLine[1] == &quot;ie&quot; Then
-    $sTitle = &quot;Choose File to Upload&quot;
-Else 
-    MsgBox($MB_SYSTEMMODAL, &quot;&quot;, &quot;Unknown browser&quot;)
-    Exit
-EndIf
+<span class="n">If</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;chrome&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;edge&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;firefox&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;File Upload&quot;</span>
+<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;ie&quot;</span> <span class="n">Then</span>
+    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Choose File to Upload&quot;</span>
+<span class="n">Else</span> 
+    <span class="n">MsgBox</span><span class="p">(</span><span class="err">$</span><span class="n">MB_SYSTEMMODAL</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;Unknown browser&quot;</span><span class="p">)</span>
+    <span class="n">Exit</span>
+<span class="n">EndIf</span>
 
-; Find window
-WinActivate($sTitle) 
+<span class="p">;</span> <span class="n">Find</span> <span class="n">window</span>
+<span class="nf">WinActivate</span><span class="p">(</span><span class="err">$</span><span class="n">sTitle</span><span class="p">)</span> 
 
-; Path to the file
-Send(&quot;{ALTDOWN}n{ALTUP}&quot;)
-send($CmdLine[2])
-Send(&quot;{ALTDOWN}O{ALTUP}&quot;)
-</code></pre>
+<span class="p">;</span> <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">file</span>
+<span class="nf">Send</span><span class="p">(</span><span class="s">&quot;{ALTDOWN}n{ALTUP}&quot;</span><span class="p">)</span>
+<span class="n">send</span><span class="p">(</span><span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">Send</span><span class="p">(</span><span class="s">&quot;</span><span class="p">{</span><span class="n">ALTDOWN</span><span class="p">}</span><span class="n">O</span><span class="p">{</span><span class="n">ALTUP</span><span class="p">}</span><span class="s">&quot;)</span>
+</pre></div>
+
 
 <p>Run it with two arguments: <code>handler.exe firefox C:/path/to/file.txt</code></p>
 <h4>Linux Solution - xdotool</h4>
@@ -132,37 +133,38 @@ only simulate keyboard input, mouse movements and windows manipulation.
 However, it is enough to open a file. The following script looks for open file
 dialog for Firefox or Chromium browser, switches to that window, types path to
 the file and press "Open" button (can be done by a shortcut: ALT+O). </p>
-<pre><code>...
+<div class="highlight"><pre><span></span><span class="p">...</span>
 
-file=&quot;/home/andrew/42.png&quot;
+<span class="n">file</span><span class="o">=</span><span class="ss">&quot;/home/andrew/42.png&quot;</span>
 
-browser=&quot;firefox&quot;
-# browser=&quot;chromium&quot;
+<span class="n">browser</span><span class="o">=</span><span class="ss">&quot;firefox&quot;</span>
+<span class="o">#</span> <span class="n">browser</span><span class="o">=</span><span class="ss">&quot;chromium&quot;</span>
 
-if [ &quot;$browser&quot; = &quot;firefox&quot; ]; then
-    win_name=&quot;File Upload&quot;
-fi
+<span class="k">if</span> <span class="p">[</span> <span class="ss">&quot;$browser&quot;</span> <span class="o">=</span> <span class="ss">&quot;firefox&quot;</span> <span class="p">];</span> <span class="k">then</span>
+    <span class="n">win_name</span><span class="o">=</span><span class="ss">&quot;File Upload&quot;</span>
+<span class="n">fi</span>
 
-if [ &quot;$browser&quot; = &quot;chromium&quot; ]; then
-    win_name=&quot;Open File&quot;
-fi
+<span class="k">if</span> <span class="p">[</span> <span class="ss">&quot;$browser&quot;</span> <span class="o">=</span> <span class="ss">&quot;chromium&quot;</span> <span class="p">];</span> <span class="k">then</span>
+    <span class="n">win_name</span><span class="o">=</span><span class="ss">&quot;Open File&quot;</span>
+<span class="n">fi</span>
 
-echo &quot;Looking for the window of the '$browser' browser with name '$win_name'&quot;
+<span class="n">echo</span> <span class="ss">&quot;Looking for the window of the &#39;$browser&#39; browser with name &#39;$win_name&#39;&quot;</span>
 
-# Find window PID
-WIN=$(for pid in $(xdotool search --class &quot;$browser&quot;); do \
-    if [[ $(xdotool getwindowname $pid) == &quot;$win_name&quot; ]]; \
-    then echo $pid; fi; done)
+<span class="o">#</span> <span class="n">Find</span> <span class="n">window</span> <span class="n">PID</span>
+<span class="n">WIN</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="k">for</span> <span class="n">pid</span> <span class="k">in</span> <span class="err">$</span><span class="p">(</span><span class="n">xdotool</span> <span class="k">search</span> <span class="c1">--class &quot;$browser&quot;); do \</span>
+    <span class="k">if</span> <span class="p">[[</span> <span class="err">$</span><span class="p">(</span><span class="n">xdotool</span> <span class="n">getwindowname</span> <span class="err">$</span><span class="n">pid</span><span class="p">)</span> <span class="o">==</span> <span class="ss">&quot;$win_name&quot;</span> <span class="p">]];</span> <span class="err">\</span>
+    <span class="k">then</span> <span class="n">echo</span> <span class="err">$</span><span class="n">pid</span><span class="p">;</span> <span class="n">fi</span><span class="p">;</span> <span class="n">done</span><span class="p">)</span>
 
-# Switch to the window
-xdotool windowactivate $WIN
+<span class="o">#</span> <span class="n">Switch</span> <span class="k">to</span> <span class="n">the</span> <span class="n">window</span>
+<span class="n">xdotool</span> <span class="n">windowactivate</span> <span class="err">$</span><span class="n">WIN</span>
 
-# Send file path
-xdotool type --window $WIN &quot;$file&quot;
+<span class="o">#</span> <span class="n">Send</span> <span class="n">file</span> <span class="n">path</span>
+<span class="n">xdotool</span> <span class="k">type</span> <span class="c1">--window $WIN &quot;$file&quot;</span>
 
-# Press &quot;Open&quot; button
-xdotool key --window $WIN alt+o
-</code></pre>
+<span class="o">#</span> <span class="n">Press</span> <span class="ss">&quot;Open&quot;</span> <span class="n">button</span>
+<span class="n">xdotool</span> <span class="k">key</span> <span class="c1">--window $WIN alt+o</span>
+</pre></div>
+
 
 <p>These are the most elegant solution which I found. Even though it need
 additional software it showed itself as simple and reliable way to approach file

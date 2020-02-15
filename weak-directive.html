@@ -72,19 +72,20 @@ won't show any errors. In this note I will demonstrate how does it work.</p>
 <figure class='code'>
 <figcaption>
 
-<pre><code>:::c
-#pragma weak debug
-extern void debug(char*);
-void (*debugfunc)(char*) = debug;
+<div class="highlight"><pre><span></span><span class="cp">#pragma weak debug</span>
+<span class="k">extern</span> <span class="kt">void</span> <span class="nf">debug</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">debug</span><span class="p">;</span>
 
-int main(){
-    if(debugfunc){
-        (*debugfunc)("hello");
-    }
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">debugfunc</span><span class="p">){</span>
+        <span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
 
-    return 0;
-}
-</code></pre>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 </figure>
 
 <p>At line 2 we define debug function with an <code>extern</code> keyword. That means that
@@ -98,38 +99,43 @@ is very very simple:</p>
 <figure class='code'>
 <figcaption>
 
-<pre><code>:::c
-#include "stdio.h"
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;stdio.h&quot;</span><span class="cp"></span>
 
-void debug(char * str){
-    printf("[DEBUG] %s\n", str);
-}
-</code></pre>
+<span class="kt">void</span> <span class="nf">debug</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span> <span class="n">str</span><span class="p">){</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;[DEBUG] %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
 </figure>
 
 <h4>Interesting part</h4>
 <p>See what happens if we compile <code>main.c</code> only:</p>
-<pre><code>andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -o app main.c
+<div class="highlight"><pre><span></span><span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="n">gcc</span> <span class="o">-</span><span class="n">Wall</span> <span class="o">-</span><span class="n">o</span> <span class="n">app</span> <span class="n">main</span><span class="p">.</span><span class="k">c</span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ ./app
-</code></pre>
+<span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="p">.</span><span class="o">/</span><span class="n">app</span>
+</pre></div>
+
+
 <p>Nothing =). But if we compile <code>debug.c</code> and then link it together with newly
 compiled <code>main.c</code>, then:</p>
-<pre><code>andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -c main.c
+<div class="highlight"><pre><span></span><span class="n">andrew</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span><span class="w"></span>
+<span class="err">➔</span><span class="w"> </span><span class="n">gcc</span><span class="w"> </span><span class="o">-</span><span class="n">Wall</span><span class="w"> </span><span class="o">-</span><span class="n">c</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">c</span><span class="w"></span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -c debug.c
+<span class="n">andrew</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span><span class="w"></span>
+<span class="err">➔</span><span class="w"> </span><span class="n">gcc</span><span class="w"> </span><span class="o">-</span><span class="n">Wall</span><span class="w"> </span><span class="o">-</span><span class="n">c</span><span class="w"> </span><span class="n">debug</span><span class="p">.</span><span class="n">c</span><span class="w"></span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -o app main.o debug.o
+<span class="n">andrew</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span><span class="w"></span>
+<span class="err">➔</span><span class="w"> </span><span class="n">gcc</span><span class="w"> </span><span class="o">-</span><span class="n">Wall</span><span class="w"> </span><span class="o">-</span><span class="n">o</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">o</span><span class="w"> </span><span class="n">debug</span><span class="p">.</span><span class="n">o</span><span class="w"></span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ ./app
-[DEBUG] hello
-</code></pre>
+<span class="n">andrew</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span><span class="w"></span>
+<span class="err">➔</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">app</span><span class="w"></span>
+<span class="o">[</span><span class="n">DEBUG</span><span class="o">]</span><span class="w"> </span><span class="n">hello</span><span class="w"></span>
+</pre></div>
+
+
 <p>Note that to compile files separately without linking you need to use <code>-c</code>
 argument.</p>
 <p>In the first case linker couldn't find implementation for <code>debug()</code> and replace it
@@ -142,43 +148,51 @@ treat it as a normal function. In this case <code>debugfunc</code> is pointing t
 <p>Let's look what is really happening in the binaries and if it is true what is
 described in the previous paragraph. Firstly, let's compile both examples as two
 separated binaries for further comparison:</p>
-<pre><code>andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -o app main.o
+<div class="highlight"><pre><span></span><span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="n">gcc</span> <span class="o">-</span><span class="n">Wall</span> <span class="o">-</span><span class="n">o</span> <span class="n">app</span> <span class="n">main</span><span class="p">.</span><span class="n">o</span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ gcc -Wall -o appd main.o debug.o
-</code></pre>
+<span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="n">gcc</span> <span class="o">-</span><span class="n">Wall</span> <span class="o">-</span><span class="n">o</span> <span class="n">appd</span> <span class="n">main</span><span class="p">.</span><span class="n">o</span> <span class="n">debug</span><span class="p">.</span><span class="n">o</span>
+</pre></div>
+
+
 <p>Next let's look what is the difference between them. With <code>nm</code> utility we can see
 that in the first binary there no <code>debug</code> symbol (reference to the function) at
 all.</p>
-<pre><code>andrew at andrew-laptop in /tmp/mainfun
-➔ nm app | grep debug
-0000000000004028 D debugfunc
+<div class="highlight"><pre><span></span><span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="n">nm</span> <span class="n">app</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">debug</span>
+<span class="mi">0000000000004028</span> <span class="n">D</span> <span class="n">debugfunc</span>
 
-andrew at andrew-laptop in /tmp/mainfun
-➔ nm appd | grep debug
-0000000000001160 T debug
-0000000000004030 D debugfunc
-</code></pre>
+<span class="n">andrew</span> <span class="k">at</span> <span class="n">andrew</span><span class="o">-</span><span class="n">laptop</span> <span class="k">in</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mainfun</span>
+<span class="err">➔</span> <span class="n">nm</span> <span class="n">appd</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">debug</span>
+<span class="mi">0000000000001160</span> <span class="n">T</span> <span class="n">debug</span>
+<span class="mi">0000000000004030</span> <span class="n">D</span> <span class="n">debugfunc</span>
+</pre></div>
+
+
 <p>Actually, there quite a lot of small discrepancies between two binaries. You can
 look on the differences with the following command:</p>
-<pre><code>andrew at andrew-laptop in /tmp/mainfun
-➔ vimdiff &lt;(objdump -d app) &lt;(objdump -d appd)
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="err">➔ vimdiff &lt;(objdump -d app) &lt;(objdump -d appd)</span>
+</pre></div>
+
+
 <p>Disassembly of the main function should be similar to this:</p>
-<pre><code>0000000000001119 &lt;main&gt;:
-    1119:       55                      push   %rbp
-    111a:       48 89 e5                mov    %rsp,%rbp
-    111d:       48 8b 05 04 2f 00 00    mov    0x2f04(%rip),%rax    # 4028 &lt;debugfunc&gt;
-    1124:       48 85 c0                test   %rax,%rax
-    1127:       74 10                   je     1139 &lt;main+0x20&gt;
-    1129:       48 8b 05 f8 2e 00 00    mov    0x2ef8(%rip),%rax    # 4028 &lt;debugfunc&gt;
-    1130:       48 8d 3d cd 0e 00 00    lea    0xecd(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;
-    1137:       ff d0                   callq  *%rax
-    1139:       b8 00 00 00 00          mov    $0x0,%eax
-    113e:       5d                      pop    %rbp
-    113f:       c3                      retq
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">0000000000001119 &lt;main&gt;:</span>
+<span class="err">    1119:       55                      push   %rbp</span>
+<span class="err">    111a:       48 89 e5                mov    %rsp,%rbp</span>
+<span class="err">    111d:       48 8b 05 04 2f 00 00    mov    0x2f04(%rip),%rax    # 4028 &lt;debugfunc&gt;</span>
+<span class="err">    1124:       48 85 c0                test   %rax,%rax</span>
+<span class="err">    1127:       74 10                   je     1139 &lt;main+0x20&gt;</span>
+<span class="err">    1129:       48 8b 05 f8 2e 00 00    mov    0x2ef8(%rip),%rax    # 4028 &lt;debugfunc&gt;</span>
+<span class="err">    1130:       48 8d 3d cd 0e 00 00    lea    0xecd(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;</span>
+<span class="err">    1137:       ff d0                   callq  *%rax</span>
+<span class="err">    1139:       b8 00 00 00 00          mov    $0x0,%eax</span>
+<span class="err">    113e:       5d                      pop    %rbp</span>
+<span class="err">    113f:       c3                      retq</span>
+</pre></div>
+
+
 <p>The first two instruction are used to save address of the previous stack frame
 and switch to the frame local the current function (for more info see [4]<a href="https://stackoverflow.com/questions/41912684/what-is-the-purpose-of-the-rbp-register-in-x86-64-assembler">4</a>).
 The third one moves value located at address 0x4028 to the %rax register. This, in
@@ -191,40 +205,46 @@ instruction). The %rip is used for relative referencing (see [6]<a href="https:/
 <p>What is located at address 0x4028? As we know that it is global static variable
 it should be somewhere in the <code>.data</code> section. We can find it out with following
 command:</p>
-<pre><code>➔ objdump -s -j .data app
-app:     file format elf64-x86-64
+<div class="highlight"><pre><span></span><span class="err">➔</span> <span class="n">objdump</span> <span class="o">-</span><span class="n">s</span> <span class="o">-</span><span class="n">j</span> <span class="p">.</span><span class="k">data</span> <span class="n">app</span>
+<span class="n">app</span><span class="p">:</span>     <span class="n">file</span> <span class="n">format</span> <span class="n">elf64</span><span class="o">-</span><span class="n">x86</span><span class="o">-</span><span class="mi">64</span>
 
-Contents of section .data:
- 4018 00000000 00000000 20400000 00000000  ........ @......
- 4028 00000000 00000000                    ........
-</code></pre>
+<span class="n">Contents</span> <span class="k">of</span> <span class="n">section</span> <span class="p">.</span><span class="k">data</span><span class="p">:</span>
+ <span class="mi">4018</span> <span class="mi">00000000</span> <span class="mi">00000000</span> <span class="mi">20400000</span> <span class="mi">00000000</span>  <span class="p">........</span> <span class="o">@</span><span class="p">......</span>
+ <span class="mi">4028</span> <span class="mi">00000000</span> <span class="mi">00000000</span>                    <span class="p">........</span>
+</pre></div>
+
+
 <p>As you can see it is all zeros. So, ZF will be 0 and <code>je</code> will jump to 1139.</p>
 <p>In opposite case if there was something at 4028 then %rax wasn't zero, ZF was set
 to zero and <code>je</code> didn't jump. Even though the second binary has a little bit
 different addresses the <code>main()</code> is completely the same.</p>
-<pre><code>0000000000001139 &lt;main&gt;:
-    1139:       55                      push   %rbp
-    113a:       48 89 e5                mov    %rsp,%rbp
-    113d:       48 8b 05 ec 2e 00 00    mov    0x2eec(%rip),%rax    # 4030 &lt;debugfunc&gt;
-    1144:       48 85 c0                test   %rax,%rax
-    1147:       74 10                   je     1159 &lt;main+0x20&gt;
-    1149:       48 8b 05 e0 2e 00 00    mov    0x2ee0(%rip),%rax    # 4030 &lt;debugfunc&gt;
-    1150:       48 8d 3d ad 0e 00 00    lea    0xead(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;
-    1157:       ff d0                   callq  *%rax
-    1159:       b8 00 00 00 00          mov    $0x0,%eax
-    115e:       5d                      pop    %rbp
-    115f:       c3                      retq
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">0000000000001139 &lt;main&gt;:</span>
+<span class="err">    1139:       55                      push   %rbp</span>
+<span class="err">    113a:       48 89 e5                mov    %rsp,%rbp</span>
+<span class="err">    113d:       48 8b 05 ec 2e 00 00    mov    0x2eec(%rip),%rax    # 4030 &lt;debugfunc&gt;</span>
+<span class="err">    1144:       48 85 c0                test   %rax,%rax</span>
+<span class="err">    1147:       74 10                   je     1159 &lt;main+0x20&gt;</span>
+<span class="err">    1149:       48 8b 05 e0 2e 00 00    mov    0x2ee0(%rip),%rax    # 4030 &lt;debugfunc&gt;</span>
+<span class="err">    1150:       48 8d 3d ad 0e 00 00    lea    0xead(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;</span>
+<span class="err">    1157:       ff d0                   callq  *%rax</span>
+<span class="err">    1159:       b8 00 00 00 00          mov    $0x0,%eax</span>
+<span class="err">    115e:       5d                      pop    %rbp</span>
+<span class="err">    115f:       c3                      retq</span>
+</pre></div>
+
+
 <p>The address of the to which <code>debugfunc</code> points is 0x4030. Again, let's use
 <code>objdump</code> to see what is in the <code>.data</code> section:</p>
-<pre><code>➔ objdump -s -j .data appd
+<div class="highlight"><pre><span></span><span class="err">➔</span> <span class="n">objdump</span> <span class="o">-</span><span class="n">s</span> <span class="o">-</span><span class="n">j</span> <span class="p">.</span><span class="k">data</span> <span class="n">appd</span>
 
-appd:     file format elf64-x86-64
+<span class="n">appd</span><span class="p">:</span>     <span class="n">file</span> <span class="n">format</span> <span class="n">elf64</span><span class="o">-</span><span class="n">x86</span><span class="o">-</span><span class="mi">64</span>
 
-Contents of section .data:
- 4020 00000000 00000000 28400000 00000000  ........(@......
- 4030 60110000 00000000                    `.......
-</code></pre>
+<span class="n">Contents</span> <span class="k">of</span> <span class="n">section</span> <span class="p">.</span><span class="k">data</span><span class="p">:</span>
+ <span class="mi">4020</span> <span class="mi">00000000</span> <span class="mi">00000000</span> <span class="mi">28400000</span> <span class="mi">00000000</span>  <span class="p">........(</span><span class="o">@</span><span class="p">......</span>
+ <span class="mi">4030</span> <span class="mi">60110000</span> <span class="mi">00000000</span>                    <span class="o">`</span><span class="p">.......</span>
+</pre></div>
+
+
 <h4>Thoughts</h4>
 <p>Personally, I don't think that it is a good approach to base your debugging
 function on this directive. As initially it was created for backward
