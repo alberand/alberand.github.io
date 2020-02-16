@@ -19,6 +19,7 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://192.168.1.33:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
   </head>
   <body id="index" class="archive">
     <!--[if lt IE 7]>
@@ -73,13 +74,13 @@ which catch my attention a long time ago - <a href="https://www.zephyrproject.or
 </div>
 
 <p>After a first look it appeared to me as very nicely design OS with rapidly
-growing number of features. The other thing which I noticed that the list of
-supported boards is enormously big, which can come handy in future. Moreover, as
-I noticed, it is under intense development by the Intel corporation which means
-that it won't die in a few years (I hope 😀).</p>
+growing number of features. The other thing which I noticed is that the list of
+supported boards is enormously big, it can come handy in the future. Moreover, 
+it is under intense development by the Intel corporation which means that it
+won't die in a few years (I hope 😀).</p>
 <p>In this note I will describe process of setting up development environment
-for STM32 Nucleo platform with Zephyr OS. (Later I would like to add testing
-setup too)</p>
+for STM32 Nucleo (particularly for STM32L010RB) board with Zephyr OS. Later
+I would like to add testing setup too.</p>
 <h4>Environment setup</h4>
 <p>Firstly, install dependencies:</p>
 <div class="highlight"><pre><span></span>    $ sudo apt install --no-install-recommends git cmake ninja-build gperf <span class="se">\</span>
@@ -94,7 +95,7 @@ Commonly used notation for shell commands is <code>$</code> - commands executed
 by normal user and <code>#</code> commands executed as root
 </p>
 
-<p>Then, install Zephyr's <code>west</code> tool. This is basically Python utility to help you
+<p>Then, install Zephyr's <code>west</code> tool. It is basically Python utility to help you
 manage source codes and configuration of your repositories. To install it use
 <code>pip</code> (Python's package manager):</p>
 <div class="highlight"><pre><span></span>    $ pip3 install --user west
@@ -121,7 +122,7 @@ manage source codes and configuration of your repositories. To install it use
 </pre></div>
 
 
-<p>The script will lead you through the installation process. The last thing to do
+<p>The script will guide you through the installation process. The last thing to do
 is to define two environment variables which will be later used by the Zephyr's
 build system</p>
 <div class="highlight"><pre><span></span>    $ <span class="nb">export</span> <span class="nv">ZEPHYR_TOOLCHAIN_VARIANT</span><span class="o">=</span>zephyr
@@ -137,7 +138,7 @@ application development and testing so they added support of Qemu as default
 build target. Therefore, if you have <a href="https://www.qemu.org/">Qemu</a> installed you can immediately
 start to play with the system API.</p>
 <p>Firstly, before building an application, we need to configure environment for
-the Zephyr. Luckily, it is simple. To do this just <code>source</code> the <code>zephyr-env.sh</code>
+the Zephyr. Luckily, it is simple - just <code>source</code> the <code>zephyr-env.sh</code>
 script:</p>
 <div class="highlight"><pre><span></span>    $ <span class="nb">cd</span> stm-testbed/zephyr
     $ <span class="nb">source</span> zephyr-env.sh
@@ -211,9 +212,9 @@ application is entry point in the build process. That, in turn, means that you
 can control the way Zephyr OS is build from your application building process.</p>
 <p>Zephyr is installed separately somewhere in the system. So, you use it as a
 library. I suppose that they choose this way to simplify the process of
-configuration management and building process kernel with integrated.</p>
+configuration management and building of the kernel.</p>
 <p>As an examples let's create simple application based on blinky example. First of
-all create working directory and <code>cmake</code> project file:</p>
+all create working directory and <code>cmake</code>'s project file:</p>
 <div class="highlight"><pre><span></span>$ mkdir app <span class="o">&amp;&amp;</span> <span class="nb">cd</span> app
 $ mkdir src
 $ touch CMakeLists.txt
@@ -233,9 +234,9 @@ target_sources<span class="o">(</span>app PRIVATE src/main.c<span class="o">)</s
 
 
 <p>Then copy source code of provided blinky example. Go back to the <code>zephyr</code>
-folder and then take <code>samples/basic/blinky/src/main.c</code> and copy it <code>main.c</code>.</p>
+folder and then take <code>samples/basic/blinky/src/main.c</code> and copy <code>main.c</code>.</p>
 <p>Now connect your board and run <code>ninja flash</code>. It should compile and upload
-application and built-in LED will start blinking.</p>
+application, built-in LED will start blinking.</p>
 <div class="wide-boi" >
     <img id="gifka" alt="Zephyr RTOS blinky app" src="https://alberand.github.io/images/stm32-zephyr.gif">
 </div>
@@ -320,10 +321,15 @@ would recommend to follow official <a href="https://docs.zephyrproject.org/lates
     </section>
     <hr />
     <div style="text-align: center;">
-        For comments, please send me an 
-        <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
-            target="_top">email</a>, or contact me on
-        <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+        <p>
+		  For comments, please send me an 
+          <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+            target="_top">email</a> or contact me on
+          <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+		</p>
+		<p>
+		  Or create <a class="link-in-code" href="https://github.com/alberand/Blog/blob/master/content//setup_zephyr_for_stm32.md">pull request with improvements</a>
+		</p>
     </div>
     </div>
     <!--
