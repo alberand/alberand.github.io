@@ -19,7 +19,7 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="http://192.168.1.33:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
+    <link href="http://127.0.0.1:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
   </head>
   <body id="index" class="archive">
     <!--[if lt IE 7]>
@@ -123,13 +123,13 @@ MAC address:</p>
 </pre></div>
 
 
-<p>Assign static IP address to the guest system:</p>
-<div class="highlight"><pre><span></span><span class="err">ip addr add 192.168.100.224/24 broadcast 192.168.100.255 dev eth0</span>
+<p>In the guest system assign static IP address to the network interface:</p>
+<div class="highlight"><pre><span></span>ip addr add <span class="m">192</span>.168.100.224/24 broadcast <span class="m">192</span>.168.100.255 dev eth0
 </pre></div>
 
 
 <p>Don't forget to add root password:</p>
-<div class="highlight"><pre><span></span><span class="err">passwd</span>
+<div class="highlight"><pre><span></span>passwd
 </pre></div>
 
 
