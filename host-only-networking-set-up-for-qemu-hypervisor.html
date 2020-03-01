@@ -19,8 +19,8 @@
 	<meta property="og:published_time" content="2017-03-24 00:00:00+01:00" />
 	<meta property="og:title" content="Host-only networking set up for QEMU hypervisor" />
 	<meta property="og:url" content="https://alberand.github.io/host-only-networking-set-up-for-qemu-hypervisor.html" />
-	<meta property="og:description" content="In this short note I will try to describe how to set up host-only network for QEMU hypervisor. It means that guest system (run in QEMU) will be in LAN connection with a host system (physical machine). I used it for some experiments with SSH functionality of a guest system …" />
-	<meta name="description" content="In this short note I will try to describe how to set up host-only network for QEMU hypervisor. It means that guest system (run in QEMU) will be in LAN connection with a host system (physical machine). I used it for some experiments with SSH functionality of a guest system …" />
+	<meta property="og:description" content="In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine)." />
+	<meta name="description" content="In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine)." />
 
 	<meta name="HandheldFriendly" content="True" />
 	<meta name="MobileOptimized" content="320" />
@@ -66,27 +66,21 @@
       </div>
     </nav>
     <div class="container">
-    <section id="content" class="article content">
-      <header>
-        <h2 class="entry-title">
-          Host-only networking set up for QEMU hypervisor
-        </h2>
-        <div class="text-muted" >
-        
-        </div>
-        <div class="text-muted" style="margin-right: 20px;">24.03.2017</div>
-        <!-- <div class="text-muted" style="margin-top: 4px;">
-            <a href="https://alberand.github.io/category/article.html"><div class="fa fa-lg fa-folder-open"></div> Article</a>
-            <a href="https://alberand.github.io/tag/qemu.html"><div class="fa fa-lg fa-tag"></div> qemu</a>
-            <a href="https://alberand.github.io/tag/linux.html"><div class="fa fa-lg fa-tag"></div> linux</a>
-            <a href="https://alberand.github.io/tag/networking.html"><div class="fa fa-lg fa-tag"></div> networking</a>
-        </div> -->
-      </header>
-<!-- .entry-content -->
-      <div class="entry-content">
-          <article>
-        <p>In this short note I will try to describe how to set up host-only network for QEMU
-hypervisor. It means that guest system (run in QEMU) will be in LAN connection
+<section id="content" class="article content">
+  <header>
+    <h2 class="entry-title"> Host-only networking set up for QEMU hypervisor </h2>
+
+    <div class="text-muted" >
+    
+    </div>
+
+    <div class="text-muted" style="margin-right: 20px;">24.03.2017</div>
+  </header>
+
+  <div class="entry-content">
+      <article>
+		<p>In this short note I will try to describe how to set up host-only network for QEMU
+hypervisor. It means that guest system (run in QEMU) will be in LAN network
 with a host system (physical machine). I used it for some experiments with SSH 
 functionality of a guest system.</p>
 <p>Connection will be establish by virtual bridge and TAP interface. After host
@@ -169,25 +163,51 @@ will fail to connect via SSH.</p>
 <li><a href="http://www.qemu-project.org/">QEMU?</a></li>
 <li><a href="https://en.wikipedia.org/wiki/TUN/TAP">TUN/TAP?</a></li>
 </ul>
-          </article>
-      </div>
-<!-- /.entry-content 
-      <footer class="post-info text-muted">
-      </footer>-->
-      <!-- /.post-info -->
-    </section>
-    <hr />
-    <div style="text-align: center;">
-        <p>
-		  For comments, please send me an 
-          <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
-            target="_top">email</a> or contact me on
-          <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
-		</p>
-		<p>
-		  Or create <a class="link-in-code" href="https://github.com/alberand/Blog/blob/master/content//QEMU.md">pull request with improvements</a>
-		</p>
-    </div>
+      </article>
+  </div>
+
+</section>
+<hr />
+<div style="text-align: center;">
+    <p>
+	  For comments, please send me an 
+      <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+        target="_top">email</a> or contact me on
+      <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	</p>
+	<p>
+	  Or create <a class="link-in-code" href="https://github.com/alberand/Blog/blob/master/content//QEMU.md">pull request with improvements</a>
+	</p>
+</div>
+
+<!-- Structured data -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.github.io/host-only-networking-set-up-for-qemu-hypervisor.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Host-only networking set up for QEMU hypervisor",
+      "description": "In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine).",
+      "datePublished": "2017-03-24 00:00:00+01:00",
+      "dateModified": "2020-01-03 00:00:00",
+      "keywords": "qemu, linux, network, host-guest",
+      "image": "https://alberand.github.io/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "http://127.0.0.1:8000/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
     </div>
     <!--
     <footer class="footer">
