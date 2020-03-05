@@ -79,41 +79,85 @@
 
   <div class="entry-content">
       <article>
-		<p>intro</p>
-<h4>Arduino sketch</h4>
+		<p>In Linux, sometimes, even a seemingly simple task can end up to be quite hard to
+solve. In this note I want to describe how to configure and connect <a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=HC-05+Bluetooth">HC-05
+Bluetooth module</a> to the Linux PC.</p>
+<p>Play with these cheap (about <code>3$</code>) Bluetooth modules I wrote a small application
+which can help to diagnose and configure them. In this article I use Arduino
+Nano (atmega328p) and bare HC-05 without linear regulator. However, I create
+custom PCB for easier access to the pins on the breadboard.</p>
+<h4><a href="https://github.com/alberand/hctools"><code>HCTOOLS</code></a> - Arduino application</h4>
+<p>This application can be used on any Arduino starting from Arduino Nano. You can
+download it on the <a href="https://github.com/alberand/hctools">Github</a>. I used <a href="https://platformio.org/">platformio</a> as a development
+environment so if you familiar with it you know what to do. If not you can use
+classical Arduino IDE. To do so you need to:</p>
+<ol>
+<li>Copy content of <code>src/main.cpp</code> into Arduino IDE</li>
+<li>Install <code>SoftwareSerial</code> and <code>SimpleCLI</code> libraries with library manager</li>
+<li>Upload the sketch.</li>
+</ol>
+<p>The application provides "shell"-like interface to work with HC-05 module. It
+has following commands/features:</p>
 <ul>
-<li>My HC-05 </li>
+<li><strong>echo</strong> - Run simple echo server. It is useful to check if your module is
+  working. You run this command, connect to the module with your phone or PC
+  and start sending some text to it. The module will receive the text and
+  send it back to you.</li>
+<li><strong>atmode</strong> - This command will switch HC-05 module into AT command mode
+  and then turn Arduino into serial passtrhogh device between your PC and
+  HC-05. This will allow you to communicate with Bluetooth module without
+  any additional hardware (with the exception of Arduino of course)</li>
+<li><strong>master</strong> - configure connected HC-05 module as Bluetooth master.</li>
+<li><strong>slave</strong> - configure connected HC-05 module as Bluetooth slave.</li>
+<li><strong>name</strong> - change Bluetooth name of the module.</li>
+<li><strong>baudrate</strong> - change baudrate of the module. This baudrate is used when
+  module communicates with Arduino.</li>
 </ul>
-<h4>Reconfigure HC-05</h4>
-<ul>
-<li>hardware setup</li>
-<li>connect and configure</li>
-<li>remove AT mode wire (not needed implement in software)</li>
-</ul>
+<p>TODO Gif of the console? (those look nice)</p>
+<p>To use it firstly you need to connect your Arduino and HC-05 module together.</p>
+<p><strong>Hardware Setup</strong>. The principle is that we actually need to control power to
+the HC-05 module and pin 34 (or PIO11 or KEY). This way the application can
+switch module between normal and AT command mode. That is actually everything
+what we need 😀.</p>
+<p>TODO: [Schematics][]</p>
+<p><strong>Let's try it out!</strong>. Connect Arduino and HC-05 as shown in the schematics
+above and flash the application to the Arduino (with <a href="https://platformio.org/">platformio</a> or Arduino
+IDE). Then open serial monitor and you should see something like this:</p>
+<div class="highlight"><pre><span></span><code>HCTOOLS. Version: 1.0 (f0341d1)
+# 
+</code></pre></div>
+
+
+<p>Type <code>help</code> to see all the available commands and their parameters.</p>
 <h4>Back to PC</h4>
 <p>Install Bluetooth stack</p>
-<div class="highlight"><pre><span></span><code>    $ sudo apt-get install bluez bluez-utils
+<div class="highlight"><pre><span></span><code>$ sudo apt-get install bluez bluez-utils
 </code></pre></div>
 
 
 <p>Check if <code>btusb</code> is loaded into the kernel:</p>
-<div class="highlight"><pre><span></span><code>    $ lsmod <span class="p">|</span> grep btusb
+<div class="highlight"><pre><span></span><code>$ lsmod <span class="p">|</span> grep btusb
+btusb                  <span class="m">65536</span>  <span class="m">0</span>
+btrtl                  <span class="m">24576</span>  <span class="m">1</span> btusb
+btbcm                  <span class="m">16384</span>  <span class="m">1</span> btusb
+btintel                <span class="m">32768</span>  <span class="m">1</span> btusb
+bluetooth             <span class="m">675840</span>  <span class="m">5</span> btrtl,btintel,btbcm,btusb
 </code></pre></div>
 
 
 <p>Install generate Bluetooth driver</p>
-<div class="highlight"><pre><span></span><code>    $ sudo apt-get install btusb
+<div class="highlight"><pre><span></span><code>$ sudo apt-get install btusb
 </code></pre></div>
 
 
 <p>Start and enable Bluetooth service:</p>
-<div class="highlight"><pre><span></span><code>    $ sudo systemctl <span class="nb">enable</span> bluetooth.service
-    $ sudo systemctl start bluetooth.service
+<div class="highlight"><pre><span></span><code>$ sudo systemctl <span class="nb">enable</span> bluetooth.service
+$ sudo systemctl start bluetooth.service
 </code></pre></div>
 
 
 <p>Check that service successfully started and is fine: </p>
-<div class="highlight"><pre><span></span><code>    $ sudo systemctl status bluetooth.service
+<div class="highlight"><pre><span></span><code>$ sudo systemctl status bluetooth.service
     ● bluetooth.service - Bluetooth service
      Loaded: loaded <span class="o">(</span>/usr/lib/systemd/system/bluetooth.service<span class="p">;</span> disabled<span class="p">;</span> vendor preset: disabled<span class="o">)</span>
      Active: active <span class="o">(</span>running<span class="o">)</span> since Thu <span class="m">2020</span>-02-20 <span class="m">19</span>:35:07 CET<span class="p">;</span> 23h ago
@@ -128,8 +172,7 @@
 
 <p>reboot
 check dmesg. should be similar</p>
-<div class="highlight"><pre><span></span><code>~ 
-➔ dmesg <span class="p">|</span> grep Bluetooth
+<div class="highlight"><pre><span></span><code>$ dmesg <span class="p">|</span> grep Bluetooth
 <span class="o">[</span>    <span class="m">5</span>.493394<span class="o">]</span> Bluetooth: Core ver <span class="m">2</span>.22
 <span class="o">[</span>    <span class="m">5</span>.493415<span class="o">]</span> Bluetooth: HCI device and connection manager initialized
 <span class="o">[</span>    <span class="m">5</span>.493420<span class="o">]</span> Bluetooth: HCI socket layer initialized
@@ -149,8 +192,7 @@ check dmesg. should be similar</p>
 try to connect with android phone
 TODO try out with iPhone</p>
 <p>run bluetoothctl</p>
-<div class="highlight"><pre><span></span><code>~ 
-➔ sudo bluetoothctl
+<div class="highlight"><pre><span></span><code>$ sudo bluetoothctl
 Agent registered
 <span class="o">[</span>CHG<span class="o">]</span> Controller <span class="m">80</span>:56:F2:E5:43:E6 Pairable: yes
 <span class="o">[</span>bluetooth<span class="o">]</span><span class="c1"># </span>
@@ -215,11 +257,11 @@ https://duckduckgo.com/?t=ffab&amp;q=No+default+controller+available&amp;ia=web<
 https://wiki.archlinux.org/index.php/Bluetooth</p>
 <h4>References</h4>
 <ul>
+<li><a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=HC-05+Bluetooth">HC-05 Bluetooth modules on Aliexpress (non-referal link)</a></li>
+<li><a href="https://github.com/alberand/hctools">HCTOOLS application on Github</a></li>
 <li><a href=""></a></li>
 <li><a href=""></a></li>
-<li><a href=""></a></li>
-<li><a href=""></a></li>
-<li><a href=""></a></li>
+<li><a href="https://github.com/alberand/hctools"></a></li>
 </ul>
       </article>
   </div>
