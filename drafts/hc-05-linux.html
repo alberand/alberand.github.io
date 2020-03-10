@@ -37,6 +37,10 @@
     <![endif]-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="http://127.0.0.1:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
+
+    <!-- Include common article functions -->
+    <script src="https://alberand.github.io/theme/common.js"></script>
+
   </head>
   <body id="index" class="archive">
     <!--[if lt IE 7]>
@@ -134,7 +138,10 @@ IDE). Then open serial monitor and you should see something like this:</p>
 </code></pre></div>
 
 
-<p>Check if <code>btusb</code> is loaded into the kernel:</p>
+<p>Now, lets check if kernel module is installed and loaded. For some chips it will
+be enough to have <code>btusb</code> loaded but for other chips (like mine Broadcom chip)
+you will need to find and install appropriate driver. You can check if <code>btusb</code>
+is loaded into the kernel by the following command:</p>
 <div class="highlight"><pre><span></span><code>$ lsmod <span class="p">|</span> grep btusb
 btusb                  <span class="m">65536</span>  <span class="m">0</span>
 btrtl                  <span class="m">24576</span>  <span class="m">1</span> btusb
@@ -144,18 +151,35 @@ bluetooth             <span class="m">675840</span>  <span class="m">5</span> bt
 </code></pre></div>
 
 
-<p>Install generate Bluetooth driver</p>
+<p>If there is nothing in the output you should try to install general Bluetooth
+driver:</p>
 <div class="highlight"><pre><span></span><code>$ sudo apt-get install btusb
 </code></pre></div>
 
 
-<p>Start and enable Bluetooth service:</p>
+<p>If it won't work try to find driver for your particular device. You can find out
+some information about name of your Bluetooth chip with following commands:</p>
+<div class="highlight"><pre><span></span><code>$ lsusb <span class="p">|</span> grep Bluetooth
+... output is hidden ...
+$ dmesg <span class="p">|</span> grep Bluetooth
+... output is hidden ...
+</code></pre></div>
+
+
+<p class="note-right">
+<span class="note-sign">Note:</span> 
+In case you also have <code>Broadcom</code> chip I would recommend to look into
+this [instruction][4]. It seems to be a common solution.
+</p>
+
+<p>After driver is installed and kernel modules is loaded start and enable
+Bluetooth service:</p>
 <div class="highlight"><pre><span></span><code>$ sudo systemctl <span class="nb">enable</span> bluetooth.service
 $ sudo systemctl start bluetooth.service
 </code></pre></div>
 
 
-<p>Check that service successfully started and is fine: </p>
+<p>Check that service successfully started:</p>
 <div class="highlight"><pre><span></span><code>$ sudo systemctl status bluetooth.service
     ● bluetooth.service - Bluetooth service
      Loaded: loaded <span class="o">(</span>/usr/lib/systemd/system/bluetooth.service<span class="p">;</span> disabled<span class="p">;</span> vendor preset: disabled<span class="o">)</span>
@@ -169,8 +193,10 @@ $ sudo systemctl start bluetooth.service
 </code></pre></div>
 
 
-<p>reboot
-check dmesg. should be similar</p>
+<p>Now, if you installed your driver reset your PC/laptop. It should not be reboot
+but power reset (power off -&gt; power on) because during reboot your drivers could
+be still stay unloaded. After boot check output of <code>dmesg</code> it should be
+something similar to this:</p>
 <div class="highlight"><pre><span></span><code>$ dmesg <span class="p">|</span> grep Bluetooth
 <span class="o">[</span>    <span class="m">5</span>.493394<span class="o">]</span> Bluetooth: Core ver <span class="m">2</span>.22
 <span class="o">[</span>    <span class="m">5</span>.493415<span class="o">]</span> Bluetooth: HCI device and connection manager initialized
@@ -198,7 +224,7 @@ Agent registered
 </code></pre></div>
 
 
-<p>Power up built-in bluetooth module and run scanning</p>
+<p>Power up Bluetooth module and turn on the scan:</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>bluetooth<span class="o">]</span><span class="c1"># power on</span>
 Changing power on succeeded
 <span class="o">[</span>bluetooth<span class="o">]</span><span class="c1"># scan on</span>
@@ -211,7 +237,8 @@ Discovery started
 </code></pre></div>
 
 
-<p>Trust, Pair and connect to the HC-05</p>
+<p>After you will see your HC-05 you need to 
+Trust, Pair and connect to the HC-05</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>bluetooth<span class="o">]</span><span class="c1"># trust 00:13:EF:00:03:04</span>
 <span class="o">[</span>CHG<span class="o">]</span> Device <span class="m">00</span>:13:EF:00:03:04 Trusted: yes
 Changing <span class="m">00</span>:13:EF:00:03:04 trust succeeded
@@ -258,8 +285,8 @@ https://wiki.archlinux.org/index.php/Bluetooth</p>
 <ul>
 <li><a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=HC-05+Bluetooth">HC-05 Bluetooth modules on Aliexpress (non-referal link)</a></li>
 <li><a href="https://github.com/alberand/hctools">HCTOOLS application on Github</a></li>
-<li><a href=""></a></li>
-<li><a href=""></a></li>
+<li><a href="https://askubuntu.com/questions/632336/bluetooth-broadcom-43142-isnt-working/632348#632348">How to fix Bluetooth with Broadcom chip</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/Bluetooth">Arch Linux Wiki - Bluetooth</a></li>
 <li><a href="https://github.com/alberand/hctools"></a></li>
 </ul>
       </article>
