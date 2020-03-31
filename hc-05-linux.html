@@ -353,8 +353,9 @@ newline it will send it back to you.</p>
     <img class="image" alt="HC-05 Bluetooth module" style="max-width: 700px; max-height: 400px;" src="https://alberand.github.io/images/008-hc-05-overall.png">
 </div>
 
-<p>For convenience you can add a <code>udev</code> rule to have a nice name for your device.
-The name is specified in the <code>SYMLINK</code> attribute. For example:</p>
+<p>For convenience you can add a <code>udev</code> rule to have a nice name for your device
+instead of <code>/dev/rfcomm0</code>.  The name is specified in the <code>SYMLINK</code> attribute.
+For example:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$</span> cat /etc/udev/rules.d/80-blueled.rules 
 <span class="go">KERNEL==&quot;rfcomm[0-9]&quot;, SUBSYSTEM==&quot;tty&quot;, DRIVER==&quot;&quot;, ATTR{channel}==&quot;1&quot;, ATTR{address}==&quot;00:13:ef:00:03:04&quot;, SYMLINK+=&quot;blueled&quot;</span>
 </code></pre></div>
@@ -378,6 +379,7 @@ found with following command:</p>
 </code></pre></div>
 
 
+<p>Now your device should be available under <code>/dev/blueled</code> path.</p>
 <h4>Troubleshooting</h4>
 <p>There is list of problems which I faced during my attempts to configure
 everything right.</p>
