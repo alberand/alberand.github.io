@@ -131,28 +131,28 @@ is very very simple:</p>
 
 <h4>Interesting part</h4>
 <p>See what happens if we compile <code>main.c</code> only:</p>
-<div class="highlight"><pre><span></span><code>    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -o app main.c
+<div class="highlight"><pre><span></span><code><span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -o app main.c</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ ./app
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ ./app</span>
 </code></pre></div>
 
 
 <p>Nothing =). But if we compile <code>debug.c</code> and then link it together with newly
 compiled <code>main.c</code>, then:</p>
-<div class="highlight"><pre><span></span><code>    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -c main.c
+<div class="highlight"><pre><span></span><code><span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -c main.c</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -c debug.c
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -c debug.c</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -o app main.o debug.o
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -o app main.o debug.o</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ ./app
-    <span class="o">[</span>DEBUG<span class="o">]</span> hello
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ ./app</span>
+<span class="go">    [DEBUG] hello</span>
 </code></pre></div>
 
 
@@ -168,32 +168,32 @@ treat it as a normal function. In this case <code>debugfunc</code> is pointing t
 <p>Let's look what is really happening in the binaries and if it is true what is
 described in the previous paragraph. Firstly, let's compile both examples as two
 separated binaries for further comparison:</p>
-<div class="highlight"><pre><span></span><code>    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -o app main.o
+<div class="highlight"><pre><span></span><code><span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -o app main.o</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ gcc -Wall -o appd main.o debug.o
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ gcc -Wall -o appd main.o debug.o</span>
 </code></pre></div>
 
 
 <p>Next let's look what is the difference between them. With <code>nm</code> utility we can see
 that in the first binary there no <code>debug</code> symbol (reference to the function) at
 all.</p>
-<div class="highlight"><pre><span></span><code>    andrew at andrew-laptop in /tmp/mainfun
-    ➔ nm app <span class="p">|</span> grep debug
-    <span class="m">0000000000004028</span> D debugfunc
+<div class="highlight"><pre><span></span><code><span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ nm app | grep debug</span>
+<span class="go">    0000000000004028 D debugfunc</span>
 
-    andrew at andrew-laptop in /tmp/mainfun
-    ➔ nm appd <span class="p">|</span> grep debug
-    <span class="m">0000000000001160</span> T debug
-    <span class="m">0000000000004030</span> D debugfunc
+<span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ nm appd | grep debug</span>
+<span class="go">    0000000000001160 T debug</span>
+<span class="go">    0000000000004030 D debugfunc</span>
 </code></pre></div>
 
 
 <p>Actually, there quite a lot of small discrepancies between two binaries. You can
 look on the differences with the following command:</p>
-<div class="highlight"><pre><span></span><code>    andrew at andrew-laptop in /tmp/mainfun
-    ➔ vimdiff &lt;<span class="o">(</span>objdump -d app<span class="o">)</span> &lt;<span class="o">(</span>objdump -d appd<span class="o">)</span>
+<div class="highlight"><pre><span></span><code><span class="go">    andrew at andrew-laptop in /tmp/mainfun</span>
+<span class="go">    ➔ vimdiff &lt;(objdump -d app) &lt;(objdump -d appd)</span>
 </code></pre></div>
 
 
@@ -225,12 +225,12 @@ instruction). The %rip is used for relative referencing (see [6]<a href="https:/
 <p>What is located at address 0x4028? As we know that it is global static variable
 it should be somewhere in the <code>.data</code> section. We can find it out with following
 command:</p>
-<div class="highlight"><pre><span></span><code>    ➔ objdump -s -j .data app
-    app:     file format elf64-x86-64
+<div class="highlight"><pre><span></span><code><span class="go">    ➔ objdump -s -j .data app</span>
+<span class="go">    app:     file format elf64-x86-64</span>
 
-    Contents of section .data:
-     <span class="m">4018</span> <span class="m">00000000</span> <span class="m">00000000</span> <span class="m">20400000</span> <span class="m">00000000</span>  ........ @......
-     <span class="m">4028</span> <span class="m">00000000</span> <span class="m">00000000</span>                    ........
+<span class="go">    Contents of section .data:</span>
+<span class="go">     4018 00000000 00000000 20400000 00000000  ........ @......</span>
+<span class="go">     4028 00000000 00000000                    ........</span>
 </code></pre></div>
 
 
@@ -255,13 +255,13 @@ different addresses the <code>main()</code> is completely the same.</p>
 
 <p>The address of the to which <code>debugfunc</code> points is 0x4030. Again, let's use
 <code>objdump</code> to see what is in the <code>.data</code> section:</p>
-<div class="highlight"><pre><span></span><code>    ➔ objdump -s -j .data appd
+<div class="highlight"><pre><span></span><code><span class="go">    ➔ objdump -s -j .data appd</span>
 
-    appd:     file format elf64-x86-64
+<span class="go">    appd:     file format elf64-x86-64</span>
 
-    Contents of section .data:
-     <span class="m">4020</span> <span class="m">00000000</span> <span class="m">00000000</span> <span class="m">28400000</span> <span class="m">00000000</span>  ........<span class="o">(</span>@......
-     <span class="m">4030</span> <span class="m">60110000</span> <span class="m">00000000</span>                    <span class="sb">`</span>.......
+<span class="go">    Contents of section .data:</span>
+<span class="go">     4020 00000000 00000000 28400000 00000000  ........(@......</span>
+<span class="go">     4030 60110000 00000000                    `.......</span>
 </code></pre></div>
 
 
