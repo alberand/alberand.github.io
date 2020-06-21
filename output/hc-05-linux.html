@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    <title>How to connect HC-05 to Linux PC - Andrey Albershtein</title>
+
+	<meta name="author" content="Andrey Albershtein" />
+	<meta name="copyright" content="Andrey Albershtein" />
+
+
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="How to connect HC-05 to Linux PC" />
+	<meta name="date" content="2020-03-23 00:00:00+01:00" />
+	<meta property="og:type" content="article" />
+	<meta property="og:locale" content="en" />
+	<meta property="og:published_time" content="2020-03-23 00:00:00+01:00" />
+	<meta property="og:title" content="How to connect HC-05 to Linux PC" />
+	<meta property="og:url" content="https://alberand.github.io/hc-05-linux.html" />
+	<meta property="og:description" content="Connect Bluetooth HC-05 module to Linux PC using Arduino Nano for configuration" />
+	<meta name="description" content="Connect Bluetooth HC-05 module to Linux PC using Arduino Nano for configuration" />
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="MobileOptimized" content="320" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <link href="https://alberand.github.io/theme/bootstrap.css" rel="stylesheet" />
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    <link href="https://alberand.github.io/theme/style.css" rel="stylesheet" />
+    <link href="https://alberand.github.io/theme/custom.css" rel="stylesheet" />
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://127.0.0.1:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://alberand.github.io/theme/zoom.min.js"></script>
+    <link rel="stylesheet" href="https://alberand.github.io/theme/zoom.css">
+
+    <!-- Include common article functions -->
+    <script src="https://alberand.github.io/theme/common.js"></script>
+
+  </head>
+  <body id="index" class="archive">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a hreflang="" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" hreflang="" href="https://alberand.github.io">Andrey Albershtein</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-right">
+          <ul class="nav navbar-nav">
+            <li><a hreflang="" href="https://alberand.github.io/pages/about.html">About</a></li>
+            <li><a hreflang="" href="https://alberand.github.io/pages/projects.html">Projects</a></li>
+
+          </ul>
+
+        </div>
+        <!-- /.navbar-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+<section id="content" class="article content">
+  <header>
+    <h1 class="entry-title"> How to connect HC-05 to Linux PC </h1>
+
+    <div class="text-muted" >
+    
+    </div>
+
+    <div class="text-muted" style="margin-right: 20px;">23.03.2020</div>
+  </header>
+
+  <div class="entry-content">
+      <article>
+		<p>Bluetooth on Linux has always been a headache for me. As I expected connecting
+HC-05 module to my laptop wasn't any better. In this note I want to describe
+how to configure and connect <a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=HC-05+Bluetooth">HC-05 Bluetooth module</a> to the Linux PC.</p>
+<p>Playing with these cheap (about <code>3$</code>) Bluetooth modules I wrote a small
+application which can help to diagnose and configure them. In this article I use
+Arduino Nano (atmega328p) and classical HC-05 with a linear power regulator.
+There is no need to solder anything complicated - only one little wire 😀.</p>
+<div style="text-align: center;">
+    <img class="image" alt="HC-05 Bluetooth module" style="max-width: 534px; height: 400px;" src="https://alberand.github.io/images/hc-05.jpg">
+    <p class="picture-legend">
+        Image is taken from 
+        <a alt="Arduino e-shop" href="https://www.laskarduino.cz/bluetooth-modul-hc-05-ttl/">www.laskarduino.cz</a>
+    </p>
+</div>
+
+<p>Firstly, let me describe this Arduino app. I can't say that it is reliable
+but it is simpler than doing everything by hand.</p>
+<h3><a href="https://github.com/alberand/hctools"><code>HCTOOLS</code></a> - Arduino application</h3>
+<p>This application can be used on most of the Arduinos starting from Arduino Nano.
+You can download it from the <a href="https://github.com/alberand/hctools">Github</a>. I used <a href="https://platformio.org/">platformio</a> as a development
+environment so if you are familiar with it you know what to do (look into
+<code>platformio.ini</code>). If not, you can use classical Arduino IDE. To do so, you need
+to:</p>
+<ol>
+<li>Copy content of <code>src/main.cpp</code> into Arduino IDE</li>
+<li>Install <code>SoftwareSerial</code> and <code>SimpleCLI</code> libraries with library manager</li>
+<li>Upload the sketch.</li>
+</ol>
+<p>The application provides "shell"-like interface to work with HC-05 module. It
+has following commands/features:</p>
+<ul>
+<li><strong>echo</strong> - run echo server. It is useful to check if your module is working.
+  You run this command, connect to the module with your phone or PC and start
+  sending some text to it. The module will receive the text, send it to Arduino,
+  Arduino will send it back to the module and then module will send it back to
+  you. </li>
+<li><strong>atmode</strong> - switch HC-05 into AT command mode. The Arduino will just into
+  serial passtrhogh device between your PC and HC-05. This allow you to
+  communicate with Bluetooth module without any additional hardware (with the
+  exception of Arduino of course). You can test if it works by sending <code>AT</code>
+  command which should be answered with <code>OK</code>.</li>
+<li><strong>master &lt;MAC-of-slave> &lt;name></strong> - configure connected HC-05 module as
+  Bluetooth master. It has two parameters. The first one is MAC address of the
+  bluetooth device to which you want your module to connect immediately after
+  boot. Note that MAC address should be in the following form <code>1234:12:123456</code> -
+  not like classical one with lot of <code>:</code>. The second parameter is just Bluetooth
+  name of your HC-05 module. Pretty useful to distinguish it from other HC-05
+  slaves.</li>
+<li><strong>slave &lt;name></strong> - configure connected HC-05 module as Bluetooth slave. The
+  same as for master you can configured name of the module.</li>
+<li><strong>name &lt;name></strong> - change Bluetooth name of the module. </li>
+<li><strong>baudrate &lt;baudrate></strong> - change baudrate of the module. This baudrate is used when
+  module communicates with Arduino.</li>
+</ul>
+<p>To use it firstly you need to connect your Arduino and HC-05 module together.</p>
+<p><strong>Hardware Setup</strong>. The Arduino will need to control power to the HC-05 module
+and be able to set HIGH/LOW state on the pin 34 (or PIO11). This is required due
+to the way HC-05 is switched to AT mode. Firstly, Arduino powers off the module
+then it sets pin 34 into HIGH state and turns power on. After this HC-05 boot
+into AT mode.</p>
+<div style="text-align: center;">
+    <img id="schematics" class="image" alt="Schematics of connection of HC-05 Bluetooth module and Arduino" style="max-height: 400px;" src="https://alberand.github.io/images/008-schematics.png">
+</div>
+
+<p>The transistor can be any PNP transistor from your Arduino kit. Make sure that
+it is PNP by googling its datasheet. I used <code>2N3906</code>. The resistor also can
+vary. It is needed to limit current going through the base of the transistor. I
+picked 1000 Ohm one. I suppose that anything around 500 - 1500 Ohm would work.</p>
+<p><strong>Let's try this out!</strong> Connect Arduino and HC-05 as shown in the schematics
+above and flash the application to the Arduino (with <a href="https://platformio.org/">platformio</a> or Arduino
+IDE). Then open serial monitor. You should see something like this:</p>
+<div class="highlight"><pre><span></span><code><span class="go">HCTOOLS. Version: 1.0 (f0341d1)</span>
+<span class="gp">#</span> 
+</code></pre></div>
+
+
+<p>By default application assumes that module has baudrate set to <code>38400</code> (the
+default baudrate in AT mode). If you changed it previously then change it in the
+application as well and re-upload it.</p>
+<p>Type <code>help</code> into the application shell to see all the available commands.</p>
+<h3>Back to PC</h3>
+<p>So, after you set name for your module and configure it as a slave you can try
+to setup wireless connection. Install Bluetooth stack:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo apt-get install bluez bluez-utils
+</code></pre></div>
+
+
+<p>Next, lets check if kernel module is installed and loaded. For some chips it
+will be enough to have <code>btusb</code> loaded but for other chips (like my Broadcom)
+you will need to find and install appropriate driver. You can check if <code>btusb</code>
+is loaded into the kernel by the following command:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> lsmod <span class="p">|</span> grep btusb
+<span class="go">btusb                  65536  0</span>
+<span class="go">btrtl                  24576  1 btusb</span>
+<span class="go">btbcm                  16384  1 btusb</span>
+<span class="go">btintel                32768  1 btusb</span>
+<span class="go">bluetooth             675840  5 btrtl,btintel,btbcm,btusb</span>
+</code></pre></div>
+
+
+<p class="note-right">
+<span class="note-sign">Note:</span> 
+In case you also have <code>Broadcom</code> chip I would recommend to look into
+this <a href="https://askubuntu.com/questions/632336/bluetooth-broadcom-43142-isnt-working/632348#632348">instruction</a>. It seems to be a common solution.
+</p>
+
+<p>If there is nothing in the output you should try to install general Bluetooth
+driver:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo apt-get install btusb
+</code></pre></div>
+
+
+<p>If it won't work try to find driver for your particular device. You can find out
+some information about name of your Bluetooth chip with following commands:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> lsusb <span class="p">|</span> grep Bluetooth
+<span class="go">... output is hidden ...</span>
+<span class="gp">$</span> dmesg <span class="p">|</span> grep Bluetooth
+<span class="go">... output is hidden ...</span>
+</code></pre></div>
+
+
+<p>After driver is installed and kernel module is loaded start and enable Bluetooth
+service:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo systemctl <span class="nb">enable</span> bluetooth.service
+<span class="gp">$</span> sudo systemctl start bluetooth.service
+</code></pre></div>
+
+
+<p>Check that service successfully started:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo systemctl status bluetooth.service
+<span class="go">    ● bluetooth.service - Bluetooth service</span>
+<span class="go">     Loaded: loaded (/usr/lib/systemd/system/bluetooth.service; disabled; vendor preset: disabled)</span>
+<span class="go">     Active: active (running) since Thu 2020-02-20 19:35:07 CET; 23h ago</span>
+<span class="go">       Docs: man:bluetoothd(8)</span>
+<span class="go">   Main PID: 779 (bluetoothd)</span>
+<span class="go">      Tasks: 1 (limit: 6990)</span>
+<span class="go">     Memory: 2.7M</span>
+<span class="go">     CGroup: /system.slice/bluetooth.service</span>
+<span class="go">             └─779 /usr/lib/bluetooth/bluetoothd</span>
+</code></pre></div>
+
+
+<p class="note-left">
+<span class="note-sign">Note:</span> There should be - <br><code>Active: active (running)</code>
+</p>
+
+<p>Now, after you install the driver reset your PC/laptop. It really has to be 
+power reset (power off -&gt; power on) because during reboot your drivers could
+still stay unloaded (you know just in case). After boot check output of
+<code>dmesg</code> it should be something similar to this:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> dmesg <span class="p">|</span> grep Bluetooth
+<span class="go">[    5.493394] Bluetooth: Core ver 2.22</span>
+<span class="go">[    5.493415] Bluetooth: HCI device and connection manager initialized</span>
+<span class="go">[    5.493420] Bluetooth: HCI socket layer initialized</span>
+<span class="go">[    5.493422] Bluetooth: L2CAP socket layer initialized</span>
+<span class="go">[    5.493426] Bluetooth: SCO socket layer initialized</span>
+<span class="go">[    5.751843] Bluetooth: hci0: BCM: chip id 70</span>
+<span class="go">[    5.752829] Bluetooth: hci0: BCM: features 0x06</span>
+<span class="go">[    5.768841] Bluetooth: hci0: BCM43142A</span>
+<span class="go">[    5.769833] Bluetooth: hci0: BCM43142A0 (001.001.011) build 0000</span>
+<span class="go">[    6.489850] Bluetooth: hci0: BCM43142A0 (001.001.011) build 0215</span>
+<span class="go">[    6.505851] Bluetooth: hci0: Broadcom Bluetooth Device (43142)</span>
+</code></pre></div>
+
+
+<h3>Pairing with the device</h3>
+<p>First of all, I always try to connect to the HC-05 with Android phone. I used
+<a href="https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal&amp;hl=en">Serial Bluetooth Terminal</a> to connect and send some text to the module to
+check that it's alive. It is always a good sign that everything going well. So,
+in case you have one try that. Anyway, in the linux run <code>bluetoothctl</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo bluetoothctl
+<span class="go"> Agent registered</span>
+<span class="go"> [CHG] Controller 80:56:F2:E5:43:E6 Pairable: yes</span>
+<span class="gp">[bluetooth]#</span> 
+</code></pre></div>
+
+
+<p>Make power reset of the HC-05 module and then turn on Bluetooth scan of nearby
+devices on your PC:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">[bluetooth]#</span> power on
+<span class="go"> Changing power on succeeded</span>
+<span class="gp">[bluetooth]#</span> scan on
+<span class="go"> Discovery started</span>
+<span class="go"> [CHG] Controller 80:56:F2:E5:43:E6 Discovering: yes</span>
+<span class="go"> [CHG] Device 78:BD:BC:D3:D5:68 RSSI: -92</span>
+<span class="go"> [CHG] Device 78:BD:BC:D3:D5:68 Name: [TV] UE40J6272</span>
+<span class="go"> [CHG] Device 78:BD:BC:D3:D5:68 Alias: [TV] UE40J6272</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 RSSI: -59</span>
+</code></pre></div>
+
+
+<p>The exact MAC address of the HC-05 can be obtained by the <code>AT+ADDR?</code> command in
+the <code>atmode</code>. See application above👌.</p>
+<p>After something like HC-05 (<code>00:13:EF:00:03:04</code> in my case) has appeared on the
+screen you will need to make it trustworthy, pair it with your PC and try to
+connect to it. That can be done by the following commands <code>trust &lt;MAC&gt;</code>, <code>pair
+&lt;MAC&gt;</code> and <code>connect &lt;MAC&gt;</code> accordingly.</p>
+<div class="highlight"><pre><span></span><code><span class="gp">[bluetooth]#</span> trust <span class="m">00</span>:13:EF:00:03:04
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Trusted: yes</span>
+<span class="go"> Changing 00:13:EF:00:03:04 trust succeeded</span>
+<span class="gp">[bluetooth]#</span> pair <span class="m">00</span>:13:EF:00:03:04
+<span class="go"> Attempting to pair with 00:13:EF:00:03:04</span>
+<span class="go"> Request PIN code</span>
+<span class="go">[agent] Enter PIN code: 1234</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 UUIDs: 00001101-0000-1000-8000-00805f9b34fb</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 ServicesResolved: yes</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Paired: yes</span>
+<span class="go"> Pairing successful</span>
+<span class="gp">[bluetooth]#</span> set-alias mymodule
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Alias: mymodule</span>
+<span class="go"> Changing mymodule succeeded</span>
+<span class="gp">[bluetooth]#</span> connect mymodule
+<span class="go"> Device mymodule not available</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 ServicesResolved: no</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Connected: no</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Connected: yes</span>
+<span class="gp">[mymodyle]#</span> 
+</code></pre></div>
+
+
+<p>If you'd like to check if disconnect works:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">[mymodule]#</span> disconnect
+<span class="go"> Attempting to disconnect from 00:13:EF:00:03:04</span>
+<span class="go"> Successful disconnected</span>
+<span class="go"> [CHG] Device 00:13:EF:00:03:04 Connected: no</span>
+<span class="gp">[bluetooth]#</span> 
+</code></pre></div>
+
+
+<h3>Time to open serial monitor</h3>
+<p>The last step is to create serial port. The following command binds your
+Bluetooth device with rfcomm device (<code>/dev/rmcomm0</code> in this case). It won't
+immediately connect to your HC-05 only when an application such as serial
+monitor will use it. More about <a href="https://www.amd.e-technik.uni-rostock.de/ma/gol/lectures/wirlec/bluetooth_info/rfcomm.html#Device%20Types">RFCOMM protocol and devices</a>.</p>
+<p>Unfortunately, on some systems (e.g. Arch linux) <code>rfcomm</code> utility can be in
+status "deprecated" and won't be available in the official repository. Try to
+find instruction of how to install it on your particular system (See <a href="https://wiki.archlinux.org/index.php/bluetooth#Deprecated_BlueZ_tools">Arch
+Wiki</a>). </p>
+<div class="highlight"><pre><span></span><code><span class="gp">    $</span> sudo rfcomm <span class="nb">bind</span> rfcomm0 &lt;MAC-OF-HC-05&gt;
+</code></pre></div>
+
+
+<p>Now you should have serial port <code>/dev/rmcomm0</code> which is attached to your
+Bluetooth device. </p>
+<p>Let's test that it works. In another terminal open serial monitor attached to
+Arduino with <code>HCTOOLS</code> application and run <code>echo</code> command:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">    $</span> pio -e nano -t monitor
+<span class="go">    ...some output is hidden...</span>
+<span class="go">    --- Miniterm on /dev/ttyUSB0  115200,8,N,1 ---</span>
+<span class="go">    --- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H ---</span>
+<span class="go">    HCTOOLS. Version: 1.0</span>
+<span class="gp">    #</span> <span class="nb">echo</span>
+<span class="go">    Echoing every received character. CTRL-D to stop it.</span>
+</code></pre></div>
+
+
+<p>Try to open serial monitor on the <code>rfcomm</code> port and send something to the device:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">    $</span> pio device monitor -p /dev/rfcomm0 -b <span class="m">115200</span>
+<span class="go">    ...long output is hidden...</span>
+<span class="go">    --- Miniterm on /dev/ttyUSB0  115200,8,N,1 ---</span>
+<span class="go">    --- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H ---</span>
+<span class="go">    Hello</span>
+</code></pre></div>
+
+
+<p>Now, if you send something to Arduino it will send it to HC-05 and then to your
+<code>/dev/rfcomm0</code> port. If you will send something to the <code>/dev/rfcomm0</code> with a
+newline it will send it back to you.</p>
+<div style="text-align: center;">
+    <img class="image" alt="HC-05 Bluetooth module" style="max-width: 700px; max-height: 400px;" src="https://alberand.github.io/images/008-hc-05-overall.png">
+</div>
+
+<p>That basically it. For convenience you can add a <code>udev</code> rule to have a nice name
+for your device instead of <code>/dev/rfcomm0</code>.  The name is specified in the
+<code>SYMLINK</code> attribute. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> cat /etc/udev/rules.d/80-blueled.rules 
+<span class="go">KERNEL==&quot;rfcomm[0-9]&quot;, SUBSYSTEM==&quot;tty&quot;, DRIVER==&quot;&quot;, ATTR{channel}==&quot;1&quot;, ATTR{address}==&quot;00:13:ef:00:03:04&quot;, SYMLINK+=&quot;blueled&quot;</span>
+</code></pre></div>
+
+
+<p>As you can see there is attributes of particular device. These attributes can be
+found with following command:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo udevadm info --attribute-walk --name<span class="o">=</span>rfcomm0
+<span class="go">Udevadm info starts with the device specified by the devpath and then</span>
+<span class="go">walks up the chain of parent devices. It prints for every device</span>
+<span class="go">found, all possible attributes in the udev rules key format.</span>
+<span class="go">A rule to match, can be composed by the attributes of the device</span>
+<span class="go">and the attributes from one single parent device.</span>
+
+<span class="go">  looking at device &#39;/devices/virtual/tty/rfcomm0&#39;:</span>
+<span class="go">    KERNEL==&quot;rfcomm0&quot;</span>
+<span class="go">    SUBSYSTEM==&quot;tty&quot;</span>
+<span class="go">    DRIVER==&quot;&quot;</span>
+<span class="go">    ATTR{channel}==&quot;1&quot;</span>
+<span class="go">    ATTR{address}==&quot;00:13:ef:00:03:04&quot;</span>
+</code></pre></div>
+
+
+<p>Now your device should be available under <code>/dev/blueled</code> path.</p>
+<h4>Troubleshooting</h4>
+<p>There is list of problems which I faced during my attempts to configure
+everything right.</p>
+<ol>
+<li>
+<p>The following messages in response to  <code>rfcomm bind</code> command probably means
+   that you don't have kernel module for RFCOMM protocol. Try to load it <code>sudo
+   modprobe rfcomm</code>. Also try to update the kernel.</p>
+<p><code>Can't open RFCOMM control socket: Protocol not supported</code></p>
+</li>
+<li>
+<p>If <code>bluetoothctl</code> shows <code>No default controller available</code> make sure that you
+   have your driver installed and then run <code>bluetoothctl</code> with <code>sudo</code>
+   (<a href="https://stackoverflow.com/questions/48279646/bluetoothctl-no-default-controller-available">stackoverflow answer</a>).</p>
+</li>
+<li>
+<p>It can happen that other application is using Bluetooth and by doing so it
+   will occupy Bluetooth controller (in my case it was <code>connman</code>). You can
+   unblock it by firstly stopping the suspected application and then running
+   following command <code>rfkill unblock all</code>:</p>
+<div class="highlight"><pre><span></span><code>$ sudo rfkill list
+<span class="m">0</span>: tpacpi_bluetooth_sw: Bluetooth
+    Soft blocked: no
+    Hard blocked: no
+<span class="m">1</span>: hci0: Bluetooth
+    Soft blocked: yes
+    Hard blocked: no
+<span class="m">5</span>: phy3: Wireless LAN
+    Soft blocked: no
+    Hard blocked: no
+$ sudo rfkill unblock all
+$ sudo rfkill list
+...
+<span class="m">1</span>: hci0: Bluetooth
+    Soft blocked: no
+    Hard blocked: no
+...
+</code></pre></div>
+
+
+</li>
+<li>
+<p>As always power on/off helped in a few cases 😀.</p>
+</li>
+<li>A lot of information about Bluetooth is available on the <a href="https://wiki.archlinux.org/index.php/Bluetooth">Arch Linux Wiki</a></li>
+</ol>
+<h4>References</h4>
+<ul>
+<li><a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=HC-05+Bluetooth">HC-05 Bluetooth modules on Aliexpress (non-referal link)</a></li>
+<li><a href="https://github.com/alberand/hctools">HCTOOLS application on Github</a></li>
+<li><a href="https://askubuntu.com/questions/632336/bluetooth-broadcom-43142-isnt-working/632348#632348">How to fix Bluetooth with Broadcom chip</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/Bluetooth">Arch Linux Wiki - Bluetooth</a></li>
+<li><a href="https://www.amd.e-technik.uni-rostock.de/ma/gol/lectures/wirlec/bluetooth_info/rfcomm.html#Device%20Types">RFCOMM Protocol</a></li>
+</ul>
+<script>
+    switchToVertMobile = function () {
+            document.getElementById("schematics").style["margin"] = "30px 0";
+            document.getElementById("schematics").style["padding"] = "0 20px";
+            document.querySelector('.note-left').setAttribute('style', 'margin-top: 0;')
+            document.querySelector('.note-left br').setAttribute('style', 'display: none;')
+            document.querySelector('div.highlight:nth-child(31)').setAttribute('style', 'margin: 0;')
+    };
+
+    switchToHorMobile = function () {
+            document.getElementById("schematics").style["margin"] = "30px 0";
+            document.getElementById("schematics").style["padding"] = "0 20px";
+            document.querySelector('.note-left').setAttribute('style', 'margin-top: 0;')
+            document.querySelector('.note-left br').setAttribute('style', 'display: none;')
+            document.querySelector('div.highlight:nth-child(31)').setAttribute('style', 'margin: 0;')
+    };
+
+    switchToDesktop = function () {
+            document.getElementById("schematics").style["margin"] = "30px 0 30px -40px";
+            document.getElementById("schematics").style["padding"] = "0";
+            document.querySelector('.note-left br').setAttribute('style', 'display: block;')
+            document.querySelector('.note-left').setAttribute('style', 'margin-top: -180px;')
+            document.querySelector('div.highlight:nth-child(31)').setAttribute('style', 'margin: 0 -50px 0 -50px;')
+    };
+
+    // make em wide
+</script>
+
+<p></script>
+<style>
+h3 {
+    margin: 30px 0;
+}
+</style></p>
+      </article>
+  </div>
+
+</section>
+<hr />
+<div style="text-align: center;">
+    <p>
+	  For comments, please send me an 
+      <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+        target="_top">email</a> or contact me on
+      <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	</p>
+	<p>
+	  Or create <a class="link-in-code" href="https://github.com/alberand/Blog/blob/master/content//hc-05_connect_to_linux.md">pull request with improvements</a>
+	</p>
+</div>
+
+<!-- Structured data -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.github.io/hc-05-linux.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "How to connect HC-05 to Linux PC",
+      "description": "Connect Bluetooth HC-05 module to Linux PC using Arduino Nano for configuration",
+      "datePublished": "2020-03-23 00:00:00+01:00",
+      "dateModified": "2020-03-23 00:00:00",
+      "keywords": "arduino, hc-05, bluetooth, linux",
+      "image": "https://alberand.github.io/images/hc-05.jpg",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.github.io/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

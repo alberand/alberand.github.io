@@ -1,0 +1,122 @@
+html {
+  overflow-y: scroll;
+}
+
+h5 {
+    font-weight: bold;
+}
+
+h4 {
+    padding: 14px 0 14px 0;
+    font-weight: bold;
+}
+
+h3 {
+    font-weight: bold;
+}
+
+h2 {
+  margin: 20px 0;
+}
+
+.link-in-code {
+  color: #c7254e;
+  text-decoration: none;
+}
+.link-in-code:hover {
+  color: #c7254e;
+  text-decoration: none;
+}
+
+.navbar {
+  border-radius: 0px !important;
+}
+
+
+#skills-box {
+  width: 350px;
+  padding: 7px;
+  font-size: 13px;
+  float: left;
+}
+
+#skills-box dd{
+  margin: 0 0 10px 18px;
+}
+
+#contacts-box {
+  width: 350px;
+  padding: 7px;
+  font-size: 13px;
+  float: right;
+}
+
+.picture-legend {
+  color: #9d9d9d;
+  font-size: 12px;
+  text-align: center;
+}
+
+.centered-image {
+  text-align: center;
+}
+
+.margined {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.wide-boi {
+  width: 100vw;
+  position: relative;
+  left: calc(-50vw + 50%);
+  text-align: center;
+  margin: 35px 0 35px 0;
+}
+
+@media only screen and (max-width: 700px) { 
+  .image {
+    width: 100vw;
+    position: relative;
+    left: calc(-50vw + 50%);
+    text-align: center;
+  }
+}
+
+.note-left {
+  width: 250px;
+  position:absolute;
+  margin-left: -260px;
+  margin-top: -100px;
+  color: #666;
+  line-height: 2rem;
+}
+
+.note-right {
+  width: 250px;
+  position: absolute;
+  margin-left: 750px;
+  margin-top: -100px;
+  color: #666;
+  line-height: 2rem;
+}
+
+#note-normal {
+  width: 100%;
+  z-index: 0;
+  position: static;
+  margin: 0 0 10px;
+  color: inherit;
+}
+
+.note-sign {
+  display: none;
+}
+
+#note-normal .note-sign {
+  display: inline-block;
+}
+
+#note-normal .note-sign {
+  display: inline-block;
+}
