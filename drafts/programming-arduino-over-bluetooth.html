@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    <title>Programming Arduino over Bluetooth - Andrey Albershtein</title>
+
+	<meta name="author" content="Andrey Albershtein" />
+	<meta name="copyright" content="Andrey Albershtein" />
+
+
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Programming Arduino over Bluetooth" />
+	<meta name="date" content="2019-09-06 00:00:00+02:00" />
+	<meta property="og:type" content="article" />
+	<meta property="og:locale" content="en" />
+	<meta property="og:published_time" content="2019-09-06 00:00:00+02:00" />
+	<meta property="og:title" content="Programming Arduino over Bluetooth" />
+	<meta property="og:url" content="https://alberand.io/drafts/programming-arduino-over-bluetooth.html" />
+	<meta property="og:description" content="Over the air (wireless) programming of the Arduino with HC-05 Bluetooth module" />
+	<meta name="description" content="Over the air (wireless) programming of the Arduino with HC-05 Bluetooth module" />
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="MobileOptimized" content="320" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <link href="https://alberand.io/theme/bootstrap.css" rel="stylesheet" />
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet">
+    <link href="https://alberand.io/theme/style.css" rel="stylesheet" />
+    <link href="https://alberand.io/theme/custom.css" rel="stylesheet" />
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://127.0.0.1:8000/feeds/rss.xml" type="application/rss+xml" rel="alternate" title="Andrey Albershtein RSS Feed" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://alberand.io/theme/zoom.min.js"></script>
+    <link rel="stylesheet" href="https://alberand.io/theme/zoom.css">
+
+    <!-- Include common article functions -->
+    <script src="https://alberand.io/theme/common.js"></script>
+
+  </head>
+  <body id="index" class="archive">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a hreflang="" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" hreflang="" href="https://alberand.io">Andrey Albershtein</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-right">
+          <ul class="nav navbar-nav">
+            <li><a hreflang="" href="https://alberand.io/pages/about.html">About</a></li>
+            <li><a hreflang="" href="https://alberand.io/pages/projects.html">Projects</a></li>
+
+          </ul>
+
+        </div>
+        <!-- /.navbar-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+<section id="content" class="article content">
+  <header>
+    <h1 class="entry-title"> Programming Arduino over Bluetooth </h1>
+
+    <div class="text-muted" >
+    
+    </div>
+
+    <div class="text-muted" style="margin-right: 20px;">06.09.2019</div>
+  </header>
+
+  <div class="entry-content">
+      <article>
+		<p>For one of my project I wanted to implement so called over the air (or shortly
+OTA) updates of firmware over Bluetooth. That basically mean that you can
+program Arduino remotely via Bluetooth HC-05 module.</p>
+<h2>How bootloader works?</h2>
+<p>TODO: good info here: use it
+I’ve used AVR microcontrollers both for hobbies and work projects. These
+versatile microcontrollers ran the code I programmed them with, but once the
+final device was shipped, it was hard to change the firmware (the software
+running on the microcontroller): The user needed an ISP programmer and the
+software tools to update the firmware. A more convenient solution is to use a
+bootloader. The bootloader is a small program that runs in a separate memory
+space on the microcontroller separated from the main application space. It can
+accept firmware upgrades from various sources (USB is often used) and dump them
+to the main application space. More complex implementations can do automated
+upgrades via the Internet offering transparency to the end user.</p>
+<p><strong>Internal memory</strong>. All microcontrollers used in Arduino have internal flash
+memory. This memory is used to store the code of an application and bootloader.
+The important feature of ATMega MCU is that flash is "In-System
+self-programmable". That means that MCU can updates its own memory without use
+of external devices. As I said there is actually two application sitting in the
+memory an application and bootloader.</p>
+<p><strong>The bootloader</strong>. It is simple application which is always stored in the
+flash memory of microcontroller but could be rewritten as everything else. When
+you power on your Arduino it doesn't immediately goes to your application, it
+actually starts at specific address, so called <strong>Reset vector</strong>. This
+address has "jump" instruction which tells it to jump to the address where
+bootloader is located. You can actually get rid of bootloader and jump straight
+to the application code but this approach has some major disadvantages.</p>
+<p class="note-right">
+    <span class="note-sign">Note: </span> For example, one of the disadvantages
+    is - that if your application will start updating itself and hang during the
+    process. Or connection to the host will be lost. You will end up with
+    non-working software which need to be updated with other tool.
+</p>
+
+<p>The further action depends on the bootloader but, in most cases it configures
+essential peripherals. Next, it starts waiting for the data on serial port. That
+the moment when PC start sending bytes to the Arduino. Actually there is the
+whole communication protocol - you could find specification in the official
+specification <a href="http://ww1.microchip.com/downloads/en/Appnotes/doc2591.pdf">STK500</a>. The bootloader receives this data and writes it
+to the memory. After communication is complete bootloader jumps to the
+address where application is stored. From now on MCU starts executing received
+code.</p>
+<div class="wide-boi" >
+    <img id="gifka" alt="Bootloader process" data-action="zoom"
+        src="https://alberand.io/images/bootloader-principle.png">
+</div>
+
+<p><strong>Does it have to be serial/USB?</strong>. On most of the Arduinos there is USB to UART
+controller which give us possibility to talk to the microcontroller via USB
+cable. But, basically, we can connect our microcontroller to any communication
+interface. So, how we can exploit it? The HC-05 is Bluetooth module which
+supports "Serial Port Profile". The modules emulates a serial cable but
+wirelessly 😀. There are many more different one <a href="https://en.wikipedia.org/wiki/List_of_Bluetooth_profiles">Bluetooth profiles</a>.</p>
+<p><strong>The plan</strong>. There are some articles on implementation of the "Over the
+Air" updates based on combination of Arduino and HC-05. In this post I describe
+realization which does not need any physical modification of the HC-05. However,
+before uploading new firmware you are required to press a reset button. It can
+be seen as a completely wrong as it much more convenient to have everything
+automatic. But, it is super easy to setup and I see it as a security features
+(not a restriction👌) as to upload firmware to the device you need physical
+access to it so nobody else can do it.</p>
+<h2>Over-the-air updates preparation</h2>
+<p>The setup is following - Arduino is connected to the Bluetooth module. To update
+firmware you connects to the HC-05 from the PC. After pressing reset button
+bootloader starts waiting for data on UART. Arduino IDE (or actually <code>avrdude</code>)
+writes data to the Bluetooth port. Bootloader reads it and writes to the memory.</p>
+<p>[][TODO image of setup]</p>
+<p><strong>Timeout</strong>. By default, bootloader doesn't wait indefinitely for the commands
+from the PC. However, the timeout is quite short after which bootloader jumps
+to anything that is already in the memory (application). That causes a little
+problem as to create a connection between HC-05 module and PC takes a few
+seconds.</p>
+<p>So, the first step is to modify bootloader to force it to wait for a longer time
+period. Next, we need to configure Arduino and HC-05 to correctly
+communicate between each other. As it is normal serial link our modified
+bootloader should have correct baud rate to communicate with the module.</p>
+<h3>Needed hardware</h3>
+<p>[IMAGE OF HW][]</p>
+<ul>
+<li>Arduino Nano</li>
+<li>Arduino Nano</li>
+<li>HC-05 Bluetooth module</li>
+<li>Wires</li>
+<li>Breadoard</li>
+</ul>
+<h3>Configuring Optiboot bootloader</h3>
+<p>I decided to try one of the popular bootloaders with lot of useful features -
+<a href="https://github.com/Optiboot/optiboot">optiboot</a>. As I discovered later it already has implementation of different
+timeouts. So, one task is done 🤔.</p>
+<p>After tweaking around a little bit I successfully compiled it for ATMega328p
+with <code>make atmega328</code>. Check out <a href="https://github.com/Optiboot/optiboot/wiki/CompilingOptiboot">official documentation</a> for more
+information on how to compile for other board.</p>
+<p>The default baudrate set in the bootloader is <code>115200</code>. I decide to leave it as
+it is. But that means that I need to change baudrate on the HC-05 module as
+default one is <code>38400</code>.</p>
+<h3>Installing bootloader with Arduino Nano</h3>
+<p>The uploading process was a little bit tricky because all of my wires,
+breadboards and Arduinos are from cheap Chinese manufactures 😐. The quality
+is close to very bad. The main problem was loosely connection wires as they had
+glue on the metallic tip. So, if communication is unstable try to move around
+with those wires - it could be a reason why. Also, don't use the longest one.</p>
+<p><strong>Arduino as ISP programmer</strong>. The first step is to take another Arduino and
+upload ArduionISP sketch from the standard set of examples. This application
+turns your Arduino into a programmer (like you heh). </p>
+<div class="wide-boi" >
+    <img id="gifka" alt="Installing bootloader with Arduino Nano" data-action="zoom"
+        src="https://alberand.io/images/nano-update-bootloader.png">
+</div>
+
+<p>The setup consist of two Arduino Nano and HC-05 bluetooth module. The second
+Arduino is used as a programmer. You can also add some LEDs to a programmer to
+see the state of uploading process.</p>
+<p>The principle is following - the programming Arduino is connected to the PC.
+Over the SPI this Arduino connects to the ICSP (those six pin put aside) of
+the Arduino we want to program.</p>
+<p>If you want you can also connect LEDs to pins x, x and x to see the state of the
+programmer. I actually have one Arduino especially for programming the other
+one. It has LEDs soldered straight to the pins:</p>
+<p>[IMAGE of arduino nano with leds][]</p>
+<h3>How to change HC-05 configuration</h3>
+<p>The module has two modes - one for normal operation and one for changing
+configuration with AT commands. Firstly, you need serial adapter to send
+commands to the module from the PC. </p>
+<p>If you have USB to serial adapter (something like <a href="https://www.aliexpress.com/item/32826575637.html?spm=a2g0o.productlist.0.0.1a1b152byezyN0&amp;algo_pvid=1415518c-b43a-43ee-bc72-99da975e1540&amp;algo_expid=1415518c-b43a-43ee-bc72-99da975e1540-0&amp;btsid=0be3764315876534842897724efca8&amp;ws_ab_test=searchweb0_0,searchweb201602_,searchweb201603_">this</a>) I would suggest to
+use it. But you can replace it with another Arduino with serial passthrough 
+application.</p>
+<p class="note-left">
+    <span class="note-sign">Note: </span> By serial passthrough application I
+    mean the app which reads data on one serial port and send it to another one
+    and vise versa.
+</p>
+
+<div class="wide-boi" >
+    <img id="gifka" alt="Image of setup to change configuration in HC-05" data-action="zoom"
+        src="https://alberand.io/images/hc-05-configuration.png">
+</div>
+
+<p>The Arduino is connected to the PC with a cable. I used Arduino Nano which has
+only one serial port. Therefore, my only port is occupied by a PC. But we need a
+second one for the HC-05. The solution is amazing <SoftwareSerial.h> library
+which allows you to configure some pins to behave as a serial port. Upload
+following sketch into your board:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;SoftwareSerial.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#define BAUDRATE 38400</span>
+
+<span class="n">SoftwareSerial</span> <span class="nf">hcmodule</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">);</span> <span class="c1">// RX, TX</span>
+
+<span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">Serial</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">BAUDRATE</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">Serial</span><span class="p">)</span> <span class="p">{</span> <span class="p">;</span> <span class="p">}</span>
+
+  <span class="n">Serial</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Serial passthrough&quot;</span><span class="p">);</span>
+
+  <span class="n">hcmodule</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">BAUDRATE</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">hcmodule</span><span class="p">.</span><span class="n">available</span><span class="p">())</span>
+    <span class="n">Serial</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">hcmodule</span><span class="p">.</span><span class="n">read</span><span class="p">());</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">Serial</span><span class="p">.</span><span class="n">available</span><span class="p">())</span>
+    <span class="n">hcmodule</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">Serial</span><span class="p">.</span><span class="n">read</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p>Possibly, you will need to play a little bit with baud rate. My module had
+default one <code>38400</code> but I think I saw modules with <code>57600</code>. So, try both✌️..</p>
+<p>[connection of HC-05 with pin 34 to high][]</p>
+<p>Connect HC-05 module as shown in the figure above. Then, turn off and turn on
+module by disconnecting power wire. As pin 34 is high HC-05 will boots into AT
+mode.</p>
+<p>Open serial monitor on your PC. The following sequence of commands checks
+version of the HC-05 module, switches module to the slave mode and sets baudrate
+to <code>115200</code> with 1 stop bin and no parity.</p>
+<div class="highlight"><pre><span></span><code><span class="go">AT</span>
+<span class="gp">&gt;</span> OK
+<span class="go">AT+VERSION?</span>
+<span class="gp">&gt;</span> +VERSION:2.0-20100601
+<span class="go">AT+ROLE=0</span>
+<span class="gp">&gt;</span> OK
+<span class="go">AT+UART:115200,1,0</span>
+<span class="gp">&gt;</span> OK
+<span class="go">AT+UART?</span>
+<span class="gp">&gt;</span> +UART:115200,1,0
+<span class="gp">&gt;</span> OK
+</code></pre></div>
+
+
+<p>You can also change name with <code>AT+NAME=name</code>. I created a <a href="https://github.com/alberand/hctools">small application</a>
+which could be easier to use if you want to configure multiple devices.</p>
+<h2>Uploading firmware over Bluetooth</h2>
+<p>On Windows HC-05 should be visible as <code>COMx</code> port. So, you could choose it
+directly in the Arduino IDE. On Linux there is a little bit more steps to
+connect the module. I wrote <a href="https://alberand.com/hc-05-linux.html">the whole article</a> on that topic 🤨.</p>
+<h3>Testing Bluetooth communication</h3>
+<p>Let's test that communication works at all before we try to update firmware.
+Upload the same serial pass through firmware but with correct baudrate, as I
+mentioned I used <code>115200</code>.</p>
+<p>Then, run one serial monitor on port with Arduino (e.g. <code>COM1</code> or 🐧
+<code>/dev/ttyUSB0</code>). The second one on virtual port attached to Bluetooth channel
+(e.g. <code>COM2</code> or 🐧 <code>/dev/rfcomm0</code>).</p>
+<h3>Wireless programming</h3>
+<p>So, now uploading process is following:</p>
+<ol>
+<li>Compile application</li>
+<li>Run <code>avrdude</code> on serial port attached to the Bluetooth channel</li>
+<li>Press reset on the Arduino</li>
+</ol>
+<p>It works well in both Arduino IDE and platformio. However, sometimes <code>avrdude</code>
+can't synchronise with the bootloader and start printing errors. Just reset it
+one more time and it will catch up.</p>
+<h2>Future Improvements</h2>
+<p>Updating firmware with overwriting the old one is a bad practice. If
+communication is not reliable or device unexpectedly turns off your firmware
+becomes unusable. The better way is to use external memory chip (or internal
+memory if your application is small) and, firstly, write firmware at the
+external memory and then copy and run it.</p>
+<p>One of the bootloader which allows this is DualOptiboot. I am planning to try
+this one in the next version of my Bluetooth controller. The first step will be
+to choose some memory chip and add it to the board.</p>
+<h3>References</h3>
+<ul>
+<li><a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=hc-05">HC-05</a></li>
+<li><a href="https://github.com/Optiboot/optiboot">Optiboot</a></li>
+<li><a href="https://github.com/LowPowerLab/DualOptiboot">DualOptiboot</a></li>
+<li><a href="http://ww1.microchip.com/downloads/en/Appnotes/doc2591.pdf">STK500 protocol</a></li>
+<li><a href="https://en.wikipedia.org/wiki/List_of_Bluetooth_profiles">List of Bluetooth profiles</a></li>
+<li><a href="http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf">ATmega328P datasheet</a></li>
+<li><a href="https://www.avrfreaks.net/sites/default/files/bootloader_faq.pdf">Good FAQ about Bootloaders by Brad Schick</a></li>
+</ul>
+      </article>
+  </div>
+
+</section>
+<hr />
+<div style="text-align: center;">
+    <p>
+	  For comments, please send me an 
+      <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+        target="_top">email</a> or contact me on
+      <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	</p>
+	<p>
+	  Or create <a class="link-in-code" href="https://github.com/alberand/Blog/blob/master/content//ota_arduino_hc_05.md">pull request with improvements</a>
+	</p>
+</div>
+
+<!-- Structured data -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.io/drafts/programming-arduino-over-bluetooth.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Programming Arduino over Bluetooth",
+      "description": "Over the air (wireless) programming of the Arduino with HC-05 Bluetooth module",
+      "datePublished": "2019-09-06 00:00:00+02:00",
+      "dateModified": "2019-09-06 00:00:00",
+      "keywords": "arduino, bluetooth, hc-05, ota, remotely, wireless, programming",
+      "image": "https://alberand.io/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.io/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>
