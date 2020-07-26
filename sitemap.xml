@@ -17,6 +17,11 @@
   </url>
 
   <url>
+    <loc>https://alberand.com/ota-for-arduino.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://alberand.com/toggle-network-on-windows.html</loc>
     <priority>0.8</priority>
   </url>
