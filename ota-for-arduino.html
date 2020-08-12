@@ -98,7 +98,31 @@ For one of my project I decided to implement over the air updates of firmware
 (or shortly OTA). The choice of wireless stack fell on Bluetooth. Actually, I
 was thinking how I can utilize my HC-05 modules. These are really cheap and
 could do a decent job for a simple wireless applications.</p>
-<h2>How bootloader works?</h2>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#how-bootloader-works">How bootloader works?</a></li>
+<li><a href="#over-the-air-updates-preparation">Over-the-air updates preparation</a><ul>
+<li><a href="#needed-hardware">Needed hardware</a></li>
+</ul>
+</li>
+<li><a href="#bootloader">Bootloader</a><ul>
+<li><a href="#setting-up-optiboot">Setting up Optiboot</a></li>
+<li><a href="#installing-bootloader-with-arduino-nano">Installing bootloader with Arduino Nano</a></li>
+<li><a href="#testing-bootloader">Testing Bootloader</a></li>
+</ul>
+</li>
+<li><a href="#bluetooth-module">Bluetooth Module</a><ul>
+<li><a href="#how-to-change-hc-05-configuration">How to change HC-05 configuration</a></li>
+<li><a href="#testing-bluetooth-communication">Testing Bluetooth communication</a></li>
+</ul>
+</li>
+<li><a href="#uploading-firmware-over-bluetooth">Uploading firmware over Bluetooth</a></li>
+<li><a href="#future-improvements">Future Improvements</a><ul>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="how-bootloader-works">How bootloader works?</h2>
 <p>Let's start from some theory. Initially I didn't want to tamper with a
 bootloader but it seems like there is no other simpler way. So, firstly let's
 investigate how exactly it works and how to change it to upload data through the
@@ -154,7 +178,7 @@ board. It can be seen as a completely wrong as it's much more convenient to have
 everything automatic. But, it is super easy to setup and I see it as a security
 features (not a restriction👌), as to upload firmware to the device you need
 physical access to it, so nobody else can do it.</p>
-<h2>Over-the-air updates preparation</h2>
+<h2 id="over-the-air-updates-preparation">Over-the-air updates preparation</h2>
 <p>The setup is following - Arduino is connected to the Bluetooth module. Instead
 of connecting USB cable you pair your PC with HC-05 module. OS will create a
 serial port which you already know how to use. As I previously mentioned, there
@@ -168,7 +192,7 @@ read by Bootloader and stored to the memory.</p>
 <li>Configure HC-05 to communicate with Arduino by setting up correct baudrate </li>
 <li>Bonus: set some fancy name for the Bluetooth module</li>
 </ul>
-<h3>Needed hardware</h3>
+<h3 id="needed-hardware">Needed hardware</h3>
 <div class="wide-boi" >
     <img class="image" alt="Hardware used for Over the Air updates" data-action="zoom"
         src="https://alberand.com/images/hardware-set-photo.png">
@@ -181,8 +205,8 @@ read by Bootloader and stored to the memory.</p>
 <li>Wires</li>
 <li>Breadoard</li>
 </ul>
-<h2>Bootloader</h2>
-<h3>Setting up Optiboot</h3>
+<h2 id="bootloader">Bootloader</h2>
+<h3 id="setting-up-optiboot">Setting up Optiboot</h3>
 <p>I decided to try one of the popular bootloaders with lot of useful features -
 <a href="https://github.com/Optiboot/optiboot">optiboot</a>. As I later discovered, timeouts have already been implemented.
 So, one task is done 🤔. I set timeout to the longest one available - 8 seconds.</p>
@@ -190,11 +214,10 @@ So, one task is done 🤔. I set timeout to the longest one available - 8 second
 for ATMega328p with 8 seconds timeout and 57600 baudrate. Check out <a href="https://github.com/Optiboot/optiboot/wiki/CompilingOptiboot">official
 documentation</a> for more information on how to compile Optiboot for other
 boards.</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> git clone git@github.com:Optiboot/optiboot.git
-<span class="gp">$</span> <span class="nb">cd</span> optiboot
-<span class="gp">$</span> make -C optiboot/bootloaders/optiboot <span class="nv">WDTIME</span><span class="o">=</span><span class="m">8</span> <span class="nv">BAUD_RATE</span><span class="o">=</span><span class="m">57600</span> atmega328
-</code></pre></div>
-
+<pre><code class="console">$ git clone git@github.com:Optiboot/optiboot.git
+$ cd optiboot
+$ make -C optiboot/bootloaders/optiboot WDTIME=8 BAUD_RATE=57600 atmega328
+</code></pre>
 
 <p><strong>Why change timeout?</strong> The long timeout is required as Bluetooth protocol
 needs time to setup the connection. When you want to upload new firmware
@@ -206,7 +229,7 @@ I didn't test it.</p>
 I've decide to change it to <code>57600</code> as it is default one for <code>avrdude</code> in
 Arduino IDE and platformio. But that means that I need to change baudrate on the
 HC-05 module, as default one is <code>38400</code>.</p>
-<h3>Installing bootloader with Arduino Nano</h3>
+<h3 id="installing-bootloader-with-arduino-nano">Installing bootloader with Arduino Nano</h3>
 <p>The uploading process was a little bit tricky because all of my wires,
 breadboards and Arduinos are from cheap Chinese manufactures 😐. The quality
 is close to very bad. The main problem was loosely connection wires as they had
@@ -224,12 +247,11 @@ programmer (like you heh). </p>
 <p>You can also add some LEDs to a programmer to see the state of uploading
 process. I highly recommend doing so as it helps a lot with debugging. The LEDs
 are connected as follows:</p>
-<div class="highlight"><pre><span></span><code>// Put an LED (with resistor) on the following pins:
+<pre><code class="text">// Put an LED (with resistor) on the following pins:
 // 9: Heartbeat - shows the programmer is running
 // 8: Error - Lights up if something goes wrong (use red if that makes sense)
 // 7: Programming - In communication with the slave
-</code></pre></div>
-
+</code></pre>
 
 <p>As I use it quite often I soldered it and now I can use it as standalone device:</p>
 <div class="wide-boi" >
@@ -242,13 +264,13 @@ to the PC. Over the SPI this Arduino connects to the ICSP (those six pin put
 aside) of the Arduino we want to program. On the PC you run <code>avrdude</code> on port
 attached to the programmer. The programmer transfers commands and data to the
 connected board.</p>
-<h3>Testing Bootloader</h3>
+<h3 id="testing-bootloader">Testing Bootloader</h3>
 <p>Before starting with Bluetooth let's test that bootloader works at all.
 Connect programmed Arduino to the PC and try uploading some firmware as usual
 (e.g. blink blink blink...💡). It should work as before with built-in
 bootloader.</p>
-<h2>Bluetooth Module</h2>
-<h3>How to change HC-05 configuration</h3>
+<h2 id="bluetooth-module">Bluetooth Module</h2>
+<h3 id="how-to-change-hc-05-configuration">How to change HC-05 configuration</h3>
 <p>The module has two modes - one for normal operation and one for changing
 configuration with AT commands. Firstly, you need a serial adapter to send
 commands to the module from the PC. </p>
@@ -271,31 +293,30 @@ only one serial port. Therefore, my only port is occupied by a PC. But we need a
 second one for the HC-05. The solution is amazing <SoftwareSerial.h> library
 which allows simulate serial communication on some pins. Upload following sketch
 into your board:</p>
-<div class="highlight"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;SoftwareSerial.h&gt;</span><span class="cp"></span>
+<pre><code class="cpp">#include &lt;SoftwareSerial.h&gt;
 
-<span class="cp">#define BAUDRATE 38400</span>
+#define BAUDRATE 38400
 
-<span class="n">SoftwareSerial</span> <span class="nf">hcmodule</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">);</span> <span class="c1">// RX, TX</span>
+SoftwareSerial hcmodule(10, 11); // RX, TX
 
-<span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="n">Serial</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">BAUDRATE</span><span class="p">);</span>
-  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">Serial</span><span class="p">)</span> <span class="p">{</span> <span class="p">;</span> <span class="p">}</span>
+void setup()
+{
+  Serial.begin(BAUDRATE);
+  while (!Serial) { ; }
 
-  <span class="n">Serial</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Serial passthrough&quot;</span><span class="p">);</span>
+  Serial.println(&quot;Serial passthrough&quot;);
 
-  <span class="n">hcmodule</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="n">BAUDRATE</span><span class="p">);</span>
-<span class="p">}</span>
+  hcmodule.begin(BAUDRATE);
+}
 
-<span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">hcmodule</span><span class="p">.</span><span class="n">available</span><span class="p">())</span>
-    <span class="n">Serial</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">hcmodule</span><span class="p">.</span><span class="n">read</span><span class="p">());</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">Serial</span><span class="p">.</span><span class="n">available</span><span class="p">())</span>
-    <span class="n">hcmodule</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">Serial</span><span class="p">.</span><span class="n">read</span><span class="p">());</span>
-<span class="p">}</span>
-</code></pre></div>
-
+void loop()
+{
+  if (hcmodule.available())
+    Serial.write(hcmodule.read());
+  if (Serial.available())
+    hcmodule.write(Serial.read());
+}
+</code></pre>
 
 <p>Possibly, you will need to play a little bit with baud rate. My module had
 default one <code>38400</code> but I think I saw modules with <code>57600</code>. So, try both✌️..</p>
@@ -306,23 +327,22 @@ should stay High). If pin 34 is high, HC-05 will boot in the AT mode.</p>
 sequence of commands checks version of the HC-05 module, switches module to the
 slave mode and sets baudrate to <code>57600</code> with 1 stop bin and no parity. There is
 actually much <a href="https://www.itead.cc/wiki/Serial_Port_Bluetooth_Module_(Master/Slave)_:_HC-05">more commands</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="go">AT</span>
-<span class="gp">&gt;</span> OK
-<span class="go">AT+VERSION?</span>
-<span class="gp">&gt;</span> +VERSION:2.0-20100601
-<span class="go">AT+ROLE=0</span>
-<span class="gp">&gt;</span> OK
-<span class="go">AT+UART:57600,1,0</span>
-<span class="gp">&gt;</span> OK
-<span class="go">AT+UART?</span>
-<span class="gp">&gt;</span> +UART:57600,1,0
-<span class="gp">&gt;</span> OK
-</code></pre></div>
-
+<pre><code class="console">AT
+&gt; OK
+AT+VERSION?
+&gt; +VERSION:2.0-20100601
+AT+ROLE=0
+&gt; OK
+AT+UART:57600,1,0
+&gt; OK
+AT+UART?
+&gt; +UART:57600,1,0
+&gt; OK
+</code></pre>
 
 <p>You can also change name with <code>AT+NAME=name</code>. I created a <a href="https://github.com/alberand/hctools">small application</a>
 which could be easier to use if you want to configure multiple devices.</p>
-<h3>Testing Bluetooth communication</h3>
+<h3 id="testing-bluetooth-communication">Testing Bluetooth communication</h3>
 <p>On Windows, after connecting with a Bluetooth manager, HC-05 should be visible
 as <code>COMx</code> port. You can find exact port name in the "Device Manager". Anyway,
 the port should be visible directly in in the Arduino IDE. On Linux there is a
@@ -341,7 +361,7 @@ baudrate. By the correct one I mean that which you set in the HC-05 module with
 <p>Then, run the serial monitor on the port with Arduino (e.g. <code>COM1</code> or 🐧
 <code>/dev/ttyUSB0</code>). And another one on virtual port attached to Bluetooth channel
 (e.g. <code>COM2</code> or 🐧 <code>/dev/rfcomm0</code>).</p>
-<h2>Uploading firmware over Bluetooth</h2>
+<h2 id="uploading-firmware-over-bluetooth">Uploading firmware over Bluetooth</h2>
 <p>Time to try it. Prepare some simple application such as "Blink" and do the
 following:</p>
 <ol>
@@ -353,7 +373,7 @@ following:</p>
 <p>It works well in both Arduino IDE and platformio. However, <code>avrdude</code> can't
 sometimes synchronize with the bootloader and start printing errors. Simply reset
 the board again and it will catch up.</p>
-<h2>Future Improvements</h2>
+<h2 id="future-improvements">Future Improvements</h2>
 <p>Updating firmware by overwriting the old one is a bad idea. If communication
 isn't reliable, or device unexpectedly turns off, the firmware could corrupt and
 becomes unusable. The better way is to use external memory chip (or internal
@@ -365,7 +385,7 @@ be to choose a memory chip and add it to the board.</p>
 <p>The setup is quite simple and definitely not suitable for any device for sale.
 Nevertheless, there is <a href="https://interrupt.memfault.com/blog/device-firmware-update-cookbook">amazing article</a> on the Interrupt blog which lists
 much more details on how to build reliable firmware update mechanism.</p>
-<h3>References</h3>
+<h3 id="references">References</h3>
 <ul>
 <li><a href="https://www.aliexpress.com/wholesale?catId=0&amp;SearchText=hc-05">HC-05</a></li>
 <li><a href="https://www.itead.cc/wiki/Serial_Port_Bluetooth_Module_(Master/Slave)_:_HC-05">List of AT commands for HC-05</a></li>

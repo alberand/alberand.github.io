@@ -98,7 +98,16 @@ the browser opens an operating system's file dialog. This dialog is not part of
 the site or even a browser. As JavaScript is "jailed" by the browser it can't
 get access to the external window. There comes the problem. How a test can save
 the file (press the save button)?</p>
-<h4>Existing Solutions</h4>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#existing-solutions">Existing Solutions</a></li>
+<li><a href="#windows-solution-autoit">Windows Solution - AutoIt</a></li>
+<li><a href="#linux-solution-xdotool">Linux Solution - xdotool</a><ul>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h4 id="existing-solutions">Existing Solutions</h4>
 <p>The first solution came to my mind was to get control over the HTML's <code>input</code>
 tag and set path to the file as I want. When you choose a file the <em>value</em>
 attribute changes to the address of the file. Unfortunately (or not), we can't
@@ -114,78 +123,76 @@ interfaces. Its main advantage is that it use image processing to find similar
 elements (you need to defined via prepared screenshots of the elements). However,
 Sikuli is quite big and has its own Pythonic language with dedicated IDE. That's
 too complex solution for such a simple task.</p>
-<h4>Windows Solution - AutoIt</h4>
+<h4 id="windows-solution-autoit">Windows Solution - AutoIt</h4>
 <p>After some further search I came across AutoIt - also an automation tool for
 graphical user interfaces. What catch my attention was that scripts written for
 AutoIt could be simply compiled into standalone executables. That's super
 convenient! In result all you get in addition to your test is a <code>.exe</code> file. The
 following listing shows my script for handling file dialog for the most
 popular browsers:</p>
-<div class="highlight"><pre><span></span><code><span class="p">...</span>
-<span class="cp">#include</span> <span class="cpf">&lt;MsgBoxConstants.au3&gt;</span><span class="cp"></span>
+<pre><code>...
+#include &lt;MsgBoxConstants.au3&gt;
 
-<span class="n">If</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;chrome&quot;</span> <span class="n">Then</span>
-    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
-<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;edge&quot;</span> <span class="n">Then</span>
-    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Open&quot;</span>
-<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;firefox&quot;</span> <span class="n">Then</span>
-    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;File Upload&quot;</span>
-<span class="n">ElseIf</span> <span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;ie&quot;</span> <span class="n">Then</span>
-    <span class="err">$</span><span class="n">sTitle</span> <span class="o">=</span> <span class="s">&quot;Choose File to Upload&quot;</span>
-<span class="n">Else</span> 
-    <span class="n">MsgBox</span><span class="p">(</span><span class="err">$</span><span class="n">MB_SYSTEMMODAL</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;Unknown browser&quot;</span><span class="p">)</span>
-    <span class="n">Exit</span>
-<span class="n">EndIf</span>
+If $CmdLine[1] == &quot;chrome&quot; Then
+    $sTitle = &quot;Open&quot;
+ElseIf $CmdLine[1] == &quot;edge&quot; Then
+    $sTitle = &quot;Open&quot;
+ElseIf $CmdLine[1] == &quot;firefox&quot; Then
+    $sTitle = &quot;File Upload&quot;
+ElseIf $CmdLine[1] == &quot;ie&quot; Then
+    $sTitle = &quot;Choose File to Upload&quot;
+Else 
+    MsgBox($MB_SYSTEMMODAL, &quot;&quot;, &quot;Unknown browser&quot;)
+    Exit
+EndIf
 
-<span class="p">;</span> <span class="n">Find</span> <span class="n">window</span>
-<span class="nf">WinActivate</span><span class="p">(</span><span class="err">$</span><span class="n">sTitle</span><span class="p">)</span> 
+; Find window
+WinActivate($sTitle) 
 
-<span class="p">;</span> <span class="n">Path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">file</span>
-<span class="nf">Send</span><span class="p">(</span><span class="s">&quot;{ALTDOWN}n{ALTUP}&quot;</span><span class="p">)</span>
-<span class="n">send</span><span class="p">(</span><span class="err">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-<span class="n">Send</span><span class="p">(</span><span class="s">&quot;</span><span class="p">{</span><span class="n">ALTDOWN</span><span class="p">}</span><span class="n">O</span><span class="p">{</span><span class="n">ALTUP</span><span class="p">}</span><span class="s">&quot;)</span>
-</code></pre></div>
-
+; Path to the file
+Send(&quot;{ALTDOWN}n{ALTUP}&quot;)
+send($CmdLine[2])
+Send(&quot;{ALTDOWN}O{ALTUP}&quot;)
+</code></pre>
 
 <p>Run it with two arguments: <code>handler.exe firefox C:/path/to/file.txt</code></p>
-<h4>Linux Solution - xdotool</h4>
+<h4 id="linux-solution-xdotool">Linux Solution - xdotool</h4>
 <p>For Linux there exist a tool called <strong>xdotool</strong>. It is similar to AutoIt but it
 only simulate keyboard input, mouse movements and windows manipulation.
 However, it is enough to open a file. The following script looks for open file
 dialog for Firefox or Chromium browser, switches to that window, types path to
 the file and press "Open" button (can be done by a shortcut: ALT+O). </p>
-<div class="highlight"><pre><span></span><code><span class="p">...</span>
+<pre><code>...
 
-<span class="n">file</span><span class="o">=</span><span class="ss">&quot;/home/andrew/42.png&quot;</span>
+file=&quot;/home/andrew/42.png&quot;
 
-<span class="n">browser</span><span class="o">=</span><span class="ss">&quot;firefox&quot;</span>
-<span class="o">#</span> <span class="n">browser</span><span class="o">=</span><span class="ss">&quot;chromium&quot;</span>
+browser=&quot;firefox&quot;
+# browser=&quot;chromium&quot;
 
-<span class="k">if</span> <span class="p">[</span> <span class="ss">&quot;$browser&quot;</span> <span class="o">=</span> <span class="ss">&quot;firefox&quot;</span> <span class="p">];</span> <span class="k">then</span>
-    <span class="n">win_name</span><span class="o">=</span><span class="ss">&quot;File Upload&quot;</span>
-<span class="n">fi</span>
+if [ &quot;$browser&quot; = &quot;firefox&quot; ]; then
+    win_name=&quot;File Upload&quot;
+fi
 
-<span class="k">if</span> <span class="p">[</span> <span class="ss">&quot;$browser&quot;</span> <span class="o">=</span> <span class="ss">&quot;chromium&quot;</span> <span class="p">];</span> <span class="k">then</span>
-    <span class="n">win_name</span><span class="o">=</span><span class="ss">&quot;Open File&quot;</span>
-<span class="n">fi</span>
+if [ &quot;$browser&quot; = &quot;chromium&quot; ]; then
+    win_name=&quot;Open File&quot;
+fi
 
-<span class="n">echo</span> <span class="ss">&quot;Looking for the window of the &#39;$browser&#39; browser with name &#39;$win_name&#39;&quot;</span>
+echo &quot;Looking for the window of the '$browser' browser with name '$win_name'&quot;
 
-<span class="o">#</span> <span class="n">Find</span> <span class="n">window</span> <span class="n">PID</span>
-<span class="n">WIN</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="k">for</span> <span class="n">pid</span> <span class="k">in</span> <span class="err">$</span><span class="p">(</span><span class="n">xdotool</span> <span class="k">search</span> <span class="c1">--class &quot;$browser&quot;); do \</span>
-    <span class="k">if</span> <span class="p">[[</span> <span class="err">$</span><span class="p">(</span><span class="n">xdotool</span> <span class="n">getwindowname</span> <span class="err">$</span><span class="n">pid</span><span class="p">)</span> <span class="o">==</span> <span class="ss">&quot;$win_name&quot;</span> <span class="p">]];</span> <span class="err">\</span>
-    <span class="k">then</span> <span class="n">echo</span> <span class="err">$</span><span class="n">pid</span><span class="p">;</span> <span class="n">fi</span><span class="p">;</span> <span class="n">done</span><span class="p">)</span>
+# Find window PID
+WIN=$(for pid in $(xdotool search --class &quot;$browser&quot;); do \
+    if [[ $(xdotool getwindowname $pid) == &quot;$win_name&quot; ]]; \
+    then echo $pid; fi; done)
 
-<span class="o">#</span> <span class="n">Switch</span> <span class="k">to</span> <span class="n">the</span> <span class="n">window</span>
-<span class="n">xdotool</span> <span class="n">windowactivate</span> <span class="err">$</span><span class="n">WIN</span>
+# Switch to the window
+xdotool windowactivate $WIN
 
-<span class="o">#</span> <span class="n">Send</span> <span class="n">file</span> <span class="n">path</span>
-<span class="n">xdotool</span> <span class="k">type</span> <span class="c1">--window $WIN &quot;$file&quot;</span>
+# Send file path
+xdotool type --window $WIN &quot;$file&quot;
 
-<span class="o">#</span> <span class="n">Press</span> <span class="ss">&quot;Open&quot;</span> <span class="n">button</span>
-<span class="n">xdotool</span> <span class="k">key</span> <span class="c1">--window $WIN alt+o</span>
-</code></pre></div>
-
+# Press &quot;Open&quot; button
+xdotool key --window $WIN alt+o
+</code></pre>
 
 <p>These are the most elegant solution which I found. Even though it need
 additional software it showed itself as simple and reliable way to approach file
@@ -194,7 +201,7 @@ dialogs. All the script can be downloaded from the following link:</p>
 <a href="https://alberand.com/materials/handle_file_dialog.tar">Download scripts</a>
 </div>
 
-<h5>References</h5>
+<h5 id="references">References</h5>
 <ul>
 <li><a href="https://www.semicomplete.com/projects/xdotool/">xdotool webpage</a></li>
 <li><a href="https://www.autoitscript.com/site/autoit/">AutoIt website</a></li>

@@ -102,54 +102,53 @@ standard output or stderr (first argument is the output stream). The second
 argument is construction which wraps the message passed as <code>msg</code> by special so
 called ANSI escape sequences. These sequences tells prompt to display text with
 some special styling such as color, underline, background color etc.</p>
-<div class="highlight"><pre><span></span><code><span class="c">% The set of function to print fancy messages in octave prompt. To use it just </span>
-<span class="c">% call function name and as argument send a message you want to show.</span>
-<span class="c">% To test it use following commands:</span>
-<span class="c">% infom(&quot;Information message&quot;); error(&quot;Error message&quot;); </span>
-<span class="c">% success(&quot;Success message&quot;); head(&quot;This is head message&quot;);</span>
+<pre><code class="matlab">% The set of function to print fancy messages in octave prompt. To use it just 
+% call function name and as argument send a message you want to show.
+% To test it use following commands:
+% infom(&quot;Information message&quot;); error(&quot;Error message&quot;); 
+% success(&quot;Success message&quot;); head(&quot;This is head message&quot;);
 
-<span class="c">% Prevent octave to run it immediately.</span>
-<span class="mi">1</span><span class="p">;</span><span class="n"></span>
+% Prevent octave to run it immediately.
+1;
 
-<span class="n">function </span><span class="s">infom(msg)</span><span class="p"></span>
-    <span class="n">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[94m&#39;</span> <span class="n">msg</span><span class="p">,</span> <span class="c">...</span>
-        <span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
-    <span class="p">);</span><span class="n"></span>
-<span class="n">endfunction</span>
+function infom(msg)
+    fprintf(1, [char(27), ...
+        '[94m' msg, ...
+        char(27), ...
+        '[0m\n']
+    );
+endfunction
 
-<span class="s">function error(msg)</span><span class="p"></span>
-    <span class="n">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[91m&#39;</span> <span class="n">msg</span><span class="p">,</span> <span class="c">...</span>
-        <span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
-    <span class="p">);</span><span class="n"></span>
-<span class="n">endfunction</span>
+function error(msg)
+    fprintf(1, [char(27), ...
+        '[91m' msg, ...
+        char(27), ...
+        '[0m\n']
+    );
+endfunction
 
-<span class="s">function success(msg)</span><span class="p"></span>
-    <span class="n">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[32m&#39;</span> <span class="n">msg</span><span class="p">,</span> <span class="c">...</span>
-        <span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
-    <span class="p">);</span><span class="n"></span>
-<span class="n">endfunction</span>
+function success(msg)
+    fprintf(1, [char(27), ...
+        '[32m' msg, ...
+        char(27), ...
+        '[0m\n']
+    );
+endfunction
 
-<span class="s">function head(msg)</span><span class="p"></span>
-    <span class="n">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> 
-        <span class="p">[</span><span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[90m&#39;</span><span class="p">,</span> <span class="c">...</span>
-        <span class="s">&#39;==============================================================&#39;</span><span class="p">,</span> <span class="c">...</span>
-        <span class="s">&#39;========\n&#39;</span><span class="p">,</span> <span class="c">...</span>
-<span class="n">        msg </span><span class="s">&#39;\n&#39;, ...</span><span class="p"></span>
-        <span class="s">&#39;==============================================================&#39;</span><span class="p">,</span> <span class="c">...</span>
-        <span class="s">&#39;========\n&#39;</span><span class="p">,</span><span class="c">...</span>
-        <span class="n">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span> <span class="c">...</span>
-        <span class="s">&#39;[0m&#39;</span><span class="p">]</span>
-    <span class="p">);</span><span class="n"></span>
-<span class="n">endfunction</span>
-</code></pre></div>
-
+function head(msg)
+    fprintf(1, 
+        [char(27), ...
+        '[90m', ...
+        '==============================================================', ...
+        '========\n', ...
+        msg '\n', ...
+        '==============================================================', ...
+        '========\n',...
+        char(27), ...
+        '[0m']
+    );
+endfunction
+</code></pre>
 
 <p>Background and foreground colors can be changed in the construction shown below.
 It consist of escape character <code>^</code> (or <code>\e</code>, <code>\033</code>, <code>\x1B</code>) and format
@@ -334,12 +333,11 @@ the <a href="https://misc.flogisoft.com/bash/tip_colors_and_formatting">followin
 <li>Then in your Octave's config (by default it should be <code>~/.octaverc</code> on Linux
    system) add and don't forgot to change next commands:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><span class="c1"># Change to address where your script is</span>
-addpath<span class="o">(</span><span class="s2">&quot;/home/andrew/Documents/Octave/&quot;</span><span class="o">)</span>
+<pre><code class="bash"># Change to address where your script is
+addpath(&quot;/home/andrew/Documents/Octave/&quot;)
 messages
-PAGER_FLAGS<span class="o">(</span><span class="s2">&quot;-r&quot;</span><span class="o">)</span>
-</code></pre></div>
-
+PAGER_FLAGS(&quot;-r&quot;)
+</code></pre>
 
 <p>First line adds your directory to the global search. So, when you want to run
 this script you can just type in the Octave prompt <code>messages</code> and this script 
@@ -349,7 +347,7 @@ run at the startup of the Octave this script will be automatically executed.
 Last command add parameter to <code>less</code> program which is used when output of your
 script isn't suitable for one screen of the terminal. This parameter is needed
 to correctly display colors while you see output over the <code>less</code> program.</p>
-<h4>References:</h4>
+<h4 id="references">References:</h4>
 <ul>
 <li><a href="https://www.gnu.org/software/octave/doc/v4.0.0/index.html">Octave Documentation</a></li>
 <li><a href="http://misc.flogisoft.com/bash/tip_colors_and_formatting">Bash colors and

@@ -103,14 +103,24 @@ won't die in a few years (I hope 😀).</p>
 <p>In this note I will describe process of setting up development environment
 for STM32 Nucleo (particularly for STM32L010RB) board with Zephyr OS. Later
 I would like to add testing setup too.</p>
-<h2>Environment setup</h2>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#environment-setup">Environment setup</a></li>
+<li><a href="#zephyr-os-in-qemu-simulation">Zephyr OS in QEMU simulation</a></li>
+<li><a href="#compiling-and-running-hello-world-example">Compiling and running "Hello World" example</a></li>
+<li><a href="#creating-application-for-zephyr-os">Creating application for Zephyr OS</a><ul>
+<li><a href="#update-use-official-getting-started">Update - Use official getting started</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="environment-setup">Environment setup</h2>
 <p>Firstly, install dependencies:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo apt install --no-install-recommends git cmake ninja-build gperf <span class="se">\</span>
-    ccache dfu-util device-tree-compiler wget <span class="se">\</span>
-    python3-pip python3-setuptools python3-tk python3-wheel xz-utils file <span class="se">\</span>
+<pre><code class="console">$ sudo apt install --no-install-recommends git cmake ninja-build gperf \
+    ccache dfu-util device-tree-compiler wget \
+    python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
     make gcc gcc-multilib g++-multilib libsdl2-dev
-</code></pre></div>
-
+</code></pre>
 
 <p class="note-right">
 <span class="note-sign">Note:</span> Commonly used notation for shell commands is <code>$</code> - commands executed
@@ -120,41 +130,36 @@ by normal user and <code>#</code> commands executed as root
 <p>Then, install Zephyr's <code>west</code> tool. It is basically Python utility to help you
 manage source codes and configuration of your repositories. To install it use
 <code>pip</code> (Python's package manager):</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> pip3 install --user west
-<span class="gp">$</span> <span class="nb">echo</span> <span class="s1">&#39;export PATH=~/.local/bin:&quot;$PATH&quot;&#39;</span> &gt;&gt; ~/.bashrc
-<span class="gp">$</span> <span class="nb">source</span> ~/.bashrc
-</code></pre></div>
-
+<pre><code class="console">$ pip3 install --user west
+$ echo 'export PATH=~/.local/bin:&quot;$PATH&quot;' &gt;&gt; ~/.bashrc
+$ source ~/.bashrc
+</code></pre>
 
 <p>Now we can get zephyr source code (it will take sometime ~ 300 Mb):</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> west init stm-testbed
-</code></pre></div>
-
+<pre><code class="console">$ west init stm-testbed
+</code></pre>
 
 <p>Next update all submodules and install all the required python packages:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> <span class="nb">cd</span> stm-testbed
-<span class="gp">$</span> west update
-<span class="gp">$</span> pip3 install --user -r zephyr/scripts/requirements.txt
-</code></pre></div>
-
+<pre><code class="console">$ cd stm-testbed
+$ west update
+$ pip3 install --user -r zephyr/scripts/requirements.txt
+</code></pre>
 
 <p>Lastly, we need to setup the zephyr-SDK (compilers and tools to build Zephyr).</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.11.1/zephyr-sdk-0.11.1-setup.run
-<span class="gp">$</span> sh zephyr-sdk-0.10.0-setup.run
-</code></pre></div>
-
+<pre><code class="console">$ wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.11.1/zephyr-sdk-0.11.1-setup.run
+$ sh zephyr-sdk-0.10.0-setup.run
+</code></pre>
 
 <p>The script will guide you through the installation process. The last thing to do
 is to define two environment variables which will be later used by the Zephyr's
 build system</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> <span class="nb">export</span> <span class="nv">ZEPHYR_TOOLCHAIN_VARIANT</span><span class="o">=</span>zephyr
-<span class="gp">$</span> <span class="nb">export</span> <span class="nv">ZEPHYR_SDK_INSTALL_DIR</span><span class="o">=</span>&lt;sdk installation directory&gt;
-</code></pre></div>
-
+<pre><code class="console">$ export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+$ export ZEPHYR_SDK_INSTALL_DIR=&lt;sdk installation directory&gt;
+</code></pre>
 
 <p>I also added them to my <code>~/.bashrc</code> to not export them every time. I forgot to
 do it a few times and spend too much time looking for such a simple problem.</p>
-<h2>Zephyr OS in QEMU simulation</h2>
+<h2 id="zephyr-os-in-qemu-simulation">Zephyr OS in QEMU simulation</h2>
 <p>Zephyr is ready for compilation. The developers thought about further
 application development and testing so they added support of Qemu as default
 build target. Therefore, if you have <a href="https://www.qemu.org/">Qemu</a> installed you can immediately
@@ -162,73 +167,64 @@ start to play with the system API.</p>
 <p>Firstly, before building an application, we need to configure environment for
 the Zephyr. Luckily, it is simple - just <code>source</code> the <code>zephyr-env.sh</code>
 script:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> <span class="nb">cd</span> stm-testbed/zephyr
-<span class="gp">$</span> <span class="nb">source</span> zephyr-env.sh
-</code></pre></div>
-
+<pre><code class="console">$ cd stm-testbed/zephyr
+$ source zephyr-env.sh
+</code></pre>
 
 <p>Next, let's run provided <code>hello_world</code> application. Go to the following
 directory and create <code>build</code> directory:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> <span class="nb">cd</span> samples/hello_world/
-<span class="gp">$</span> mkdir build <span class="o">&amp;&amp;</span> <span class="nb">cd</span> build
-</code></pre></div>
-
+<pre><code class="console">$ cd samples/hello_world/
+$ mkdir build &amp;&amp; cd build
+</code></pre>
 
 <p>Now we will use <code>cmake</code> to prepare application for build (create <code>cmake</code> cache
 file). As we want to run application in <code>Qemu</code> we need to tell <code>cmake</code> about it
 with defining variable <code>BOARD</code> (with -D flag):</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> cmake -GNinja -DBOARD<span class="o">=</span>qemu_x86 ..
-</code></pre></div>
-
+<pre><code class="console">$ cmake -GNinja -DBOARD=qemu_x86 ..
+</code></pre>
 
 <p>The <code>-GNunja</code> arguments tells <code>cmake</code> that later we will build our application
 with <a href="https://ninja-build.org/">Ninja</a> building system. The last <code>..</code> is just path to the upper
 directory.  Then, build and run it with <code>ninja</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> ninja
-<span class="gp">$</span> ninja run
-</code></pre></div>
-
+<pre><code class="console">$ ninja
+$ ninja run
+</code></pre>
 
 <p>You should see something similar:</p>
-<div class="highlight"><pre><span></span><code>SeaBIOS (version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org)
+<pre><code class="text">SeaBIOS (version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org)
 Booting from ROM..***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
 Hello World! qemu_x86
-</code></pre></div>
-
+</code></pre>
 
 <p>The last line is our application. Hurray!</p>
 <p class="note-left">
 <span class="note-sign">Note: </span>To exit from Qemu press <code>CTRL + A</code> and then <code>X</code>
 </p>
 
-<h2>Compiling and running "Hello World" example</h2>
+<h2 id="compiling-and-running-hello-world-example">Compiling and running "Hello World" example</h2>
 <p>Now let's try it on the real hardware. Clean the build directory and
 re-generate cmake cache for your STM32 board.</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> ninja clean
-<span class="gp">$</span> cmake -GNinja -DBOARD<span class="o">=</span>nucleo_l073rz ..
-</code></pre></div>
-
+<pre><code class="console">$ ninja clean
+$ cmake -GNinja -DBOARD=nucleo_l073rz ..
+</code></pre>
 
 <p>Connect your board to the PC and check that it appeard in the <code>/dev</code> directory
 (mine is <code>/dev/ttyACM0</code>). Compile and flash application to the board:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> ninja
-<span class="gp">$</span> ninja flash
-</code></pre></div>
-
+<pre><code class="console">$ ninja
+$ ninja flash
+</code></pre>
 
 <p>Run some serial monitor at <code>/dev/ttyACM0</code>, <code>115200 8N1</code> to check if firmware was
 correctly uploaded. I use <code>minicom</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> sudo minicom -s
-</code></pre></div>
-
+<pre><code class="console">$ sudo minicom -s
+</code></pre>
 
 <p>Press reset button on the DevKit and you should see similar message:</p>
-<div class="highlight"><pre><span></span><code>***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+<pre><code class="text">***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
 Hello World! nucleo_l073rz
-</code></pre></div>
+</code></pre>
 
-
-<h2>Creating application for Zephyr OS</h2>
+<h2 id="creating-application-for-zephyr-os">Creating application for Zephyr OS</h2>
 <p>In Zephyr world the build system is application-centric. That means that your
 application is entry point in the build process. That, in turn, means that you
 can control the way Zephyr OS is build from your application building process.</p>
@@ -237,23 +233,21 @@ library. I suppose that they choose this way to simplify the process of
 configuration management and building of the kernel.</p>
 <p>As an examples let's create simple application based on blinky example. First of
 all create working directory and <code>cmake</code>'s project file:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$</span> mkdir app <span class="o">&amp;&amp;</span> <span class="nb">cd</span> app
-<span class="gp">$</span> mkdir src
-<span class="gp">$</span> touch CMakeLists.txt
-</code></pre></div>
-
+<pre><code class="console">$ mkdir app &amp;&amp; cd app
+$ mkdir src
+$ touch CMakeLists.txt
+</code></pre>
 
 <p>Put the following configuration into the <code>CMakeList.txt</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="c"># Boilerplate code, which pulls in the Zephyr build system.</span>
-<span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.13.1</span><span class="p">)</span>
-<span class="nb">include</span><span class="p">(</span><span class="o">$ENV{</span><span class="nv">ZEPHYR_BASE</span><span class="o">}</span><span class="s">/cmake/app/boilerplate.cmake</span> <span class="s">NO_POLICY_SCOPE</span><span class="p">)</span>
-<span class="nb">project</span><span class="p">(</span><span class="s">my_zephyr_app</span><span class="p">)</span>
+<pre><code class="cmake"># Boilerplate code, which pulls in the Zephyr build system.
+cmake_minimum_required(VERSION 3.13.1)
+include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
+project(my_zephyr_app)
 
-<span class="c"># Add your source file to the &quot;app&quot; target. This must come after</span>
-<span class="c"># the boilerplate code, which defines the target.</span>
-<span class="nb">target_sources</span><span class="p">(</span><span class="s">app</span> <span class="s">PRIVATE</span> <span class="s">src/main.c</span><span class="p">)</span>
-</code></pre></div>
-
+# Add your source file to the &quot;app&quot; target. This must come after
+# the boilerplate code, which defines the target.
+target_sources(app PRIVATE src/main.c)
+</code></pre>
 
 <p>Then copy source code of provided blinky example. Go back to the <code>zephyr</code>
 folder and then take <code>samples/basic/blinky/src/main.c</code> and copy <code>main.c</code>.</p>
@@ -303,11 +297,11 @@ completely separate from source code of the OS. </p>
 }
 </style>
 
-<h4>Update - Use official getting started</h4>
+<h4 id="update-use-official-getting-started">Update - Use official getting started</h4>
 <p>In the time when I started writing this article the official getting started was
 a little bit hard to follow. However, now it is so concise and simple that I
 would recommend to follow official <a href="https://docs.zephyrproject.org/latest/getting_started/index.html">documentation</a>.</p>
-<h4>References</h4>
+<h4 id="references">References</h4>
 <ul>
 <li><a href="https://www.zephyrproject.org/">Zephyr RTOS</a></li>
 <li><a href="https://www.st.com/en/evaluation-tools/nucleo-l010rb.html">STM32 Nucleo (STM32L010RB)</a></li>

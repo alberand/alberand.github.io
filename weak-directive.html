@@ -92,25 +92,34 @@ that there exist a <code>#pragma weak foofunction</code> directive. It tells lin
 handle the following function as weakly defined. What it means is that if linker
 fails to find definition (implementation) of the function it will skip it and
 won't show any errors. In this note I will demonstrate how does it work.</p>
-<h4>Prepare application</h4>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#demo-application">Demo application</a></li>
+<li><a href="#interesting-part">Interesting part</a></li>
+<li><a href="#look-inside">Look inside</a></li>
+<li><a href="#thoughts">Thoughts</a><ul>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="demo-application">Demo application</h2>
 <p>Firstly, let's create a simple example to work with:</p>
 <figure class='code'>
 
 
-<div class="highlight"><pre><span></span><code><span class="cp">#pragma weak debug</span>
-<span class="k">extern</span> <span class="kt">void</span> <span class="nf">debug</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">);</span>
-<span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">debug</span><span class="p">;</span>
+<pre><code>:::c
+#pragma weak debug
+extern void debug(char*);
+void (*debugfunc)(char*) = debug;
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">debugfunc</span><span class="p">){</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
-    <span class="p">}</span>
+int main(){
+    if(debugfunc){
+        (*debugfunc)("hello");
+    }
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div>
-
-
+    return 0;
+}
+</code></pre>
 </figure>
 
 <p>At line 2 we define debug function with an <code>extern</code> keyword. That means that
@@ -124,42 +133,39 @@ is very very simple:</p>
 <figure class='code'>
 
 
-<div class="highlight"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&quot;stdio.h&quot;</span><span class="cp"></span>
+<pre><code>:::c
+#include "stdio.h"
 
-<span class="kt">void</span> <span class="nf">debug</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span> <span class="n">str</span><span class="p">){</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;[DEBUG] %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>
-
-
+void debug(char * str){
+    printf("[DEBUG] %s\n", str);
+}
+</code></pre>
 </figure>
 
-<h4>Interesting part</h4>
+<h2 id="interesting-part">Interesting part</h2>
 <p>See what happens if we compile <code>main.c</code> only:</p>
-<div class="highlight"><pre><span></span><code><span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -o app main.c</span>
+<pre><code class="console">andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -o app main.c
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ ./app</span>
-</code></pre></div>
-
+andrew at andrew-laptop in /tmp/mainfun
+➔ ./app
+</code></pre>
 
 <p>Nothing =). But if we compile <code>debug.c</code> and then link it together with newly
 compiled <code>main.c</code>, then:</p>
-<div class="highlight"><pre><span></span><code><span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -c main.c</span>
+<pre><code class="console">andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -c main.c
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -c debug.c</span>
+andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -c debug.c
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -o app main.o debug.o</span>
+andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -o app main.o debug.o
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ ./app</span>
-<span class="go">[DEBUG] hello</span>
-</code></pre></div>
-
+andrew at andrew-laptop in /tmp/mainfun
+➔ ./app
+[DEBUG] hello
+</code></pre>
 
 <p>Note that to compile files separately without linking you need to use <code>-c</code>
 argument.</p>
@@ -169,41 +175,38 @@ zero. As <code>debugfunc</code> pointer points to the <code>debug()</code> and a
 isn't called.  In the second case linker found implementation for <code>debug()</code> and
 treat it as a normal function. In this case <code>debugfunc</code> is pointing to the
 <code>debug()</code> (non-zero address in memory) and therefore will be called.</p>
-<h4>Look inside</h4>
+<h2 id="look-inside">Look inside</h2>
 <p>Let's look what is really happening in the binaries and if it is true what is
 described in the previous paragraph. Firstly, let's compile both examples as two
 separated binaries for further comparison:</p>
-<div class="highlight"><pre><span></span><code><span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -o app main.o</span>
+<pre><code class="console">andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -o app main.o
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ gcc -Wall -o appd main.o debug.o</span>
-</code></pre></div>
-
+andrew at andrew-laptop in /tmp/mainfun
+➔ gcc -Wall -o appd main.o debug.o
+</code></pre>
 
 <p>Next let's look what is the difference between them. With <code>nm</code> utility we can see
 that in the first binary there no <code>debug</code> symbol (reference to the function) at
 all.</p>
-<div class="highlight"><pre><span></span><code><span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ nm app | grep debug</span>
-<span class="go">0000000000004028 D debugfunc</span>
+<pre><code class="console">andrew at andrew-laptop in /tmp/mainfun
+➔ nm app | grep debug
+0000000000004028 D debugfunc
 
-<span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ nm appd | grep debug</span>
-<span class="go">0000000000001160 T debug</span>
-<span class="go">0000000000004030 D debugfunc</span>
-</code></pre></div>
-
+andrew at andrew-laptop in /tmp/mainfun
+➔ nm appd | grep debug
+0000000000001160 T debug
+0000000000004030 D debugfunc
+</code></pre>
 
 <p>Actually, there quite a lot of small discrepancies between two binaries. You can
 look on the differences with the following command:</p>
-<div class="highlight"><pre><span></span><code><span class="go">andrew at andrew-laptop in /tmp/mainfun</span>
-<span class="go">➔ vimdiff &lt;(objdump -d app) &lt;(objdump -d appd)</span>
-</code></pre></div>
-
+<pre><code class="console">andrew at andrew-laptop in /tmp/mainfun
+➔ vimdiff &lt;(objdump -d app) &lt;(objdump -d appd)
+</code></pre>
 
 <p>Disassembly of the main function should be similar to this:</p>
-<div class="highlight"><pre><span></span><code>0000000000001119 &lt;main&gt;:
+<pre><code class="text">0000000000001119 &lt;main&gt;:
     1119:       55                      push   %rbp
     111a:       48 89 e5                mov    %rsp,%rbp
     111d:       48 8b 05 04 2f 00 00    mov    0x2f04(%rip),%rax    # 4028 &lt;debugfunc&gt;
@@ -215,8 +218,7 @@ look on the differences with the following command:</p>
     1139:       b8 00 00 00 00          mov    $0x0,%eax
     113e:       5d                      pop    %rbp
     113f:       c3                      retq
-</code></pre></div>
-
+</code></pre>
 
 <p>The first two instruction are used to save address of the previous stack frame
 and switch to the frame local the current function (for more info see [4]<a href="https://stackoverflow.com/questions/41912684/what-is-the-purpose-of-the-rbp-register-in-x86-64-assembler">4</a>).
@@ -230,20 +232,19 @@ instruction). The %rip is used for relative referencing (see [6]<a href="https:/
 <p>What is located at address 0x4028? As we know that it is global static variable
 it should be somewhere in the <code>.data</code> section. We can find it out with following
 command:</p>
-<div class="highlight"><pre><span></span><code><span class="go">➔ objdump -s -j .data app</span>
-<span class="go">app:     file format elf64-x86-64</span>
+<pre><code class="console">➔ objdump -s -j .data app
+app:     file format elf64-x86-64
 
-<span class="go">Contents of section .data:</span>
-<span class="go"> 4018 00000000 00000000 20400000 00000000  ........ @......</span>
-<span class="go"> 4028 00000000 00000000                    ........</span>
-</code></pre></div>
-
+Contents of section .data:
+ 4018 00000000 00000000 20400000 00000000  ........ @......
+ 4028 00000000 00000000                    ........
+</code></pre>
 
 <p>As you can see it is all zeros. So, ZF will be 0 and <code>je</code> will jump to 1139.</p>
 <p>In opposite case if there was something at 4028 then %rax wasn't zero, ZF was set
 to zero and <code>je</code> didn't jump. Even though the second binary has a little bit
 different addresses the <code>main()</code> is completely the same.</p>
-<div class="highlight"><pre><span></span><code>0000000000001139 &lt;main&gt;:
+<pre><code class="text">0000000000001139 &lt;main&gt;:
     1139:       55                      push   %rbp
     113a:       48 89 e5                mov    %rsp,%rbp
     113d:       48 8b 05 ec 2e 00 00    mov    0x2eec(%rip),%rax    # 4030 &lt;debugfunc&gt;
@@ -255,22 +256,20 @@ different addresses the <code>main()</code> is completely the same.</p>
     1159:       b8 00 00 00 00          mov    $0x0,%eax
     115e:       5d                      pop    %rbp
     115f:       c3                      retq
-</code></pre></div>
-
+</code></pre>
 
 <p>The address of the to which <code>debugfunc</code> points is 0x4030. Again, let's use
 <code>objdump</code> to see what is in the <code>.data</code> section:</p>
-<div class="highlight"><pre><span></span><code><span class="go">➔ objdump -s -j .data appd</span>
+<pre><code class="console">➔ objdump -s -j .data appd
 
-<span class="go">appd:     file format elf64-x86-64</span>
+appd:     file format elf64-x86-64
 
-<span class="go">Contents of section .data:</span>
-<span class="go"> 4020 00000000 00000000 28400000 00000000  ........(@......</span>
-<span class="go"> 4030 60110000 00000000                    `.......</span>
-</code></pre></div>
+Contents of section .data:
+ 4020 00000000 00000000 28400000 00000000  ........(@......
+ 4030 60110000 00000000                    `.......
+</code></pre>
 
-
-<h4>Thoughts</h4>
+<h2 id="thoughts">Thoughts</h2>
 <p>Personally, I don't think that it is a good approach to base your debugging
 function on this directive. As initially it was created for backward
 compatibility and general definition of function in the libraries (function
@@ -281,7 +280,7 @@ directive. It seems like it is not commonly used. Only in some specific
 cases, for example, in <code>pthreadlib</code> and <code>musl-libc</code>. However, I think it is very
 convenient and interesting way to disable/enable debugging or development
 features. Maybe in future I will find a way how to use it.</p>
-<h4>References</h4>
+<h4 id="references">References</h4>
 <ul>
 <li><a href="http://cseweb.ucsd.edu/~ricko/CSE131/the%20inside%20story%20on%20shared%20libraries%20and%20dynamic%20loading.pdf">The inside story on shared libraries and dynamic loading</a></li>
 <li><a href="https://gcc.gnu.org/onlinedocs/gcc/Weak-Pragmas.html">GCC docs - Weak Pragmas</a></li>

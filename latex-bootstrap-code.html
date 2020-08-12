@@ -107,17 +107,17 @@ attention than fancy colorful highlightings. Try to look at some articles while
 scrolling, you will see that the eye immediately catch those little red boxes.</p>
 <p>I wrote a function for Latex, which implements this type of highlighting. All you
 need to do is just add the following code to your Latex document.</p>
-<div class="highlight"><pre><span></span><code><span class="c">% Include package for drawing color boxes</span>
-<span class="k">\usepackage</span><span class="nb">{</span>tcolorbox<span class="nb">}</span>
+<pre><code class="tex">% Include package for drawing color boxes
+\usepackage{tcolorbox}
 
-<span class="c">% Define colors</span>
-<span class="k">\definecolor</span><span class="nb">{</span>codeBg<span class="nb">}{</span>rgb<span class="nb">}{</span>0.976, 0.949, 0.956<span class="nb">}</span>
-<span class="k">\definecolor</span><span class="nb">{</span>codeColor<span class="nb">}{</span>rgb<span class="nb">}{</span>0.780, 0.145, 0.305<span class="nb">}</span>
+% Define colors
+\definecolor{codeBg}{rgb}{0.976, 0.949, 0.956}
+\definecolor{codeColor}{rgb}{0.780, 0.145, 0.305}
 
-<span class="c">% Define new command</span>
-<span class="k">\newtcbox</span><span class="nb">{</span><span class="k">\bCode</span><span class="nb">}{</span>
+% Define new command
+\newtcbox{\bCode}{
     nobeforeafter,
-    fontupper=<span class="k">\color</span><span class="nb">{</span>codeColor<span class="nb">}</span>,
+    fontupper=\color{codeColor},
     colframe=codeBg,
     colback=codeBg,
     boxrule=0.1pt,
@@ -127,14 +127,13 @@ need to do is just add the following code to your Latex document.</p>
     right=3pt,
     top=3pt,
     bottom=4pt,
-    tcbox raise base<span class="nb">}</span>
-</code></pre></div>
-
+    tcbox raise base}
+</code></pre>
 
 <p>Depending on your document settings, sometimes, you will need to change paddings 
 of the box (left/right/top/bottom) to make it symmetric.</p>
 <p>This function can be easily used with a <code>\bCode{your code}</code> command.</p>
-<h4>References:</h4>
+<h4 id="references">References:</h4>
 <ul>
 <li><a href="http://getbootstrap.com/">Bootstrap?</a></li>
 <li><a href="https://www.latex-project.org/">Latex?</a></li>
