@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://alberand.com/how-to-restore-borg.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/updating-nixos-packages.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/missing-efi-entry.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/prague-yellow-line.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/nixos-wireguard-vpn.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/nix-notes.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/nixos-linux-kernel-vm.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/markdown-custom-tags.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/ota-for-arduino.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/hc-05-linux.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/setup-zephyr-os-for-stm32-nucleo.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/weak-directive.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/toggle-network-on-windows.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/selenium-file-dialog.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/host-only-networking-set-up-for-qemu-hypervisor.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/octave-colored-prompt-messages.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/latex-bootstrap-code.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://alberand.com/latex-bootstrap-code-ru.html</loc>
+    <priority>1.0</priority>
+  </url>
+
+
+</urlset>
