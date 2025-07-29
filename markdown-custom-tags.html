@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Add custom tags to markdown - python-markdown - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Add custom tags to markdown - python-markdown" />
+		<meta name="date" content="2023-03-28 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2023-03-28 00:00:00+02:00" />
+		<meta property="og:title" content="Add custom tags to markdown - python-markdown" />
+		<meta property="og:url" content="https://alberand.com/markdown-custom-tags.html" />
+
+			<meta property="og:description" content="Wouldn't it be cool to add custom tags to markdown documents?" />
+			<meta name="description" content="Wouldn't it be cool to add custom tags to markdown documents?" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Add custom tags to markdown - python-markdown </h1>
+
+      <time id="title-date">
+          28.03.2023
+      </time>
+  </header>
+  <p>Wouldn't it be cool to add custom tags to markdown documents? I came across
+this idea while reading <a href="https://xeiaso.net/blog">this blog</a>. Check out this <a href="https://raw.githubusercontent.com/Xe/site/main/blog/voice-control-talon.markdown">example</a>. The source
+markdown includes several tags such as <code>&lt;xeblog-conv</code> for "conversation" which
+adds comments to the article, and <code>&lt;xeblog-hero</code> for adding AI-generated Anime
+art, which is really cool! Although I haven't investigated how it's done, I'm
+excited to try implementing something similar myself.</p>
+<p>As this blog is generated with <a href="https://getpelican.com/">Pelican</a>, I thought that maybe it's also
+capable of parsing custom Markdown tags. Under the hood, Pelican uses
+<a href="https://github.com/Python-Markdown/markdown">python-markdown</a>. The docs says we can write <a href="https://python-markdown.github.io/extensions/api/#writing-extensions-for-python-markdown">custom extensions</a> for Markdown.
+Let's try and see how to do. I will show integration with Pelican but this can
+be applied for anything using python-markdown.</p>
+<p>Since this blog is generated with <a href="https://getpelican.com/">Pelican</a>, I wondered if it could parse
+custom Markdown tags. After researching, I discovered that Pelican uses
+<a href="https://github.com/Python-Markdown/markdown">python-markdown</a> under the hood. According to the documentation, we can
+write <a href="https://python-markdown.github.io/extensions/api/#writing-extensions-for-python-markdown">custom extensions</a> for Markdown parser. I'll demonstrate integration
+with Pelican, but this approach can be applied to anything that uses
+python-markdown.</p>
+<div style="text-align: center; width: 100%">
+<a href="#full-code">
+Jump to the full code
+</a>
+</div>
+
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#block-processor">Block processor</a></li>
+<li><a href="#clickable-images">Clickable images</a></li>
+<li><a href="#full-code">Full Code</a></li>
+</ul>
+</div>
+<h3 id="block-processor">Block processor</h3>
+<p>Suppose we want to parse Markdown blocks that begin with the <code>[nickname]:</code>
+prefix. The block is paragraph of text separated by newlines. Python-markdown
+offers 5 different processors, each suited for different purposes. For instance,
+if we wanted to censor certain words, we might use <a href="https://python-markdown.github.io/extensions/api/#preprocessors">Preprocessors</a>.</p>
+<div class="comment">
+<p>/* This is comment I'm talking about. Check out the <a href="https://raw.githubusercontent.com/alberand/Blog/master/content/markdown-custom-tags.md">source code</a> */</p>
+</div>
+<p>Start with adding some imports in the pelicanconf.py:</p>
+<p>
+            <div  class="highlight"  id="code-b63cabb7-6cb3-11f0-8d0d-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63cabb7-6cb3-11f0-8d0d-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="kn">from</span> <span class="nn">markdown.extensions</span> <span class="kn">import</span> <span class="n">Extension</span>
+<span class="kn">from</span> <span class="nn">markdown.blockprocessors</span> <span class="kn">import</span> <span class="n">BlockProcessor</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">etree</span>
+</code></pre></div>
+</p>
+<p>Then we need a processor which will look onto markdown blocks and decide if the
+block need to be changed or not. The processor determines if a block requires
+modification by calling the <code>self.test()</code> function. This function should return
+<code>True</code> if block need to be changed by this processor. In this instance, I check
+for a regular expression at the beginning of the block.</p>
+<p>The second method <code>self.run()</code> is executed only if <code>self.test()</code> returns
+true. This method receives the parent element of the HTML tree (such as a
+<code>&lt;div&gt;</code> object) and a list of blocks. The list of blocks starts with the block
+which matched in the <code>self.test()</code>. Therefore, <code>blocks[0]</code> will have multi-line
+string of the block of interest. The rest of the list contains all the
+subsequent blocks from the document.</p>
+<p>We receive a list of block as our parser can look for a closing tag which is
+placed in another block. As an example: code block can have newlines in it.</p>
+<p>The processed block need to be <code>pop()</code>ed from the list with <code>blocks.pop(0)</code>.
+Otherwise, if we failed to process the block, for example due to missing closing
+tag, we can return <code>False</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b63cbf51-6cb3-11f0-a1d8-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63cbf51-6cb3-11f0-a1d8-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="k">class</span> <span class="nc">Comments</span><span class="p">(</span><span class="n">BlockProcessor</span><span class="p">):</span>
+    <span class="n">RE_FENCE_START</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;^\[([a-zA-Z0-9_-]{3,})\]: &#39;</span> <span class="c1"># [alberand]:</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RE_FENCE_START</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">blocks</span><span class="p">):</span>
+        <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RE_FENCE_START</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">e</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s1">&#39;div&#39;</span><span class="p">)</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;comment&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parseChunk</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">blocks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+</p>
+<p>The next stop is to create an Extension. This will be actually quite empty.
+Simply copy this one or, <a href="https://python-markdown.github.io/extensions/api/">check the documentation</a> if you use something different
+than <code>BlockProcessor</code>. In this call the <code>register()</code> requires processor instances,
+name of this new processor, and priority (can stay 175).</p>
+<p>
+            <div  class="highlight"  id="code-b63cfa6b-6cb3-11f0-a20d-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63cfa6b-6cb3-11f0-a20d-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="k">class</span> <span class="nc">AlberandTagsExtension</span><span class="p">(</span><span class="n">Extension</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">extendMarkdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">md</span><span class="p">):</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">blockprocessors</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Comments</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">parser</span><span class="p">),</span> <span class="s1">&#39;comments&#39;</span><span class="p">,</span> <span class="mi">175</span><span class="p">)</span>
+</code></pre></div>
+</p>
+<p>The final step is to create our extension instance and let python-markdown lib
+know about its existence. With a little bit more magic, you can also add
+configuration parameters to your extension. These parameters should then be
+added <code>extension_configs</code> section in <code>MARKDOWN</code> dictionary:</p>
+<p>
+            <div  class="highlight"  id="code-b63d154f-6cb3-11f0-b2e9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63d154f-6cb3-11f0-b2e9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="n">MARKDOWN</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;extensions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">AlberandTagsExtension</span><span class="p">()],</span>
+  <span class="s1">&#39;extension_configs&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s1">&#39;markdown.extensions.extra&#39;</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s1">&#39;markdown.extensions.meta&#39;</span><span class="p">:</span> <span class="p">{},</span>
+  <span class="p">},</span>
+  <span class="s1">&#39;output_format&#39;</span><span class="p">:</span> <span class="s1">&#39;html5&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<h3 id="clickable-images">Clickable images</h3>
+<p>The other wish I had was to make every image in my Blog clickable (opens
+in a new tab). However, the default Pelican doesn't offer this feature. Luckily,
+it's easy to achieve with processors.</p>
+<p>In the following implementation we first parse markdown block to get
+parameters such as text and link. Then, we create a <code>&lt;div class="image-container"&gt;</code>,
+inside this div we add a link <code>&lt;a&gt;</code> with an image <code>&lt;img&gt;</code> inside. This way, image
+is wrapped in the link that opens in a new tab when clicked. The <code>class</code> also
+allows to apply CSS style on all images uniformly, such as centering them.</p>
+<p>
+            <div  class="highlight"  id="code-b63de729-6cb3-11f0-b417-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63de729-6cb3-11f0-b417-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="kn">from</span> <span class="nn">markdown.inlinepatterns</span> <span class="kn">import</span> <span class="n">LinkInlineProcessor</span>
+
+<span class="k">class</span> <span class="nc">ImageInlineProcessor</span><span class="p">(</span><span class="n">LinkInlineProcessor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Return a img element from the given match. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">handleMatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">handled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getText</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">handled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">src</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">handled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getLink</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">handled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">div</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span>
+        <span class="n">div</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;image-container&quot;</span><span class="p">)</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">div</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+
+        <span class="n">img</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;img&quot;</span><span class="p">)</span>
+
+        <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+
+        <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;alt&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">div</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span>
+</code></pre></div>
+</p>
+<p>The difference from the comment processor above is that python-markdown already
+has default Image processor. We need to deregister the default one and replace
+it with our own implementation.</p>
+<p>
+            <div  class="highlight"  id="code-b63e4473-6cb3-11f0-ab4c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63e4473-6cb3-11f0-ab4c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># The regex is copied from python-markdown source code</span>
+<span class="n">IMAGE_LINK_RE</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\!\[&#39;</span>
+
+<span class="k">class</span> <span class="nc">AlberandTagsExtension</span><span class="p">(</span><span class="n">Extension</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">extendMarkdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">md</span><span class="p">):</span>
+        <span class="c1"># Deregister default image processor and replace it with our custom one</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">inlinePatterns</span><span class="o">.</span><span class="n">deregister</span><span class="p">(</span><span class="s1">&#39;image_link&#39;</span><span class="p">)</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">inlinePatterns</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="n">ImageInlineProcessor</span><span class="p">(</span><span class="n">IMAGE_LINK_RE</span><span class="p">,</span> <span class="n">md</span><span class="p">),</span> <span class="s1">&#39;image_link&#39;</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+</code></pre></div>
+</p>
+<h3 id="full-code">Full Code</h3>
+<p>Put this into <code>pelicanconf.py</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b63e66c5-6cb3-11f0-adf3-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b63e66c5-6cb3-11f0-adf3-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="kn">from</span> <span class="nn">markdown.extensions</span> <span class="kn">import</span> <span class="n">Extension</span>
+<span class="kn">from</span> <span class="nn">markdown.blockprocessors</span> <span class="kn">import</span> <span class="n">BlockProcessor</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">etree</span>
+
+<span class="k">class</span> <span class="nc">ImageInlineProcessor</span><span class="p">(</span><span class="n">LinkInlineProcessor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Return a img element from the given match. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">handleMatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">handled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getText</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">handled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">src</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">handled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getLink</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">handled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">div</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span>
+        <span class="n">div</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;image-container&quot;</span><span class="p">)</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">div</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+
+        <span class="n">img</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;img&quot;</span><span class="p">)</span>
+
+        <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+
+        <span class="n">img</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;alt&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">div</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span>
+
+<span class="k">class</span> <span class="nc">Comments</span><span class="p">(</span><span class="n">BlockProcessor</span><span class="p">):</span>
+    <span class="n">RE_FENCE_START</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;^\[([a-zA-Z0-9_-]{3,})\]: &#39;</span> <span class="c1"># [alberand]:</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RE_FENCE_START</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">blocks</span><span class="p">):</span>
+        <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RE_FENCE_START</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">e</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s1">&#39;div&#39;</span><span class="p">)</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;comment&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parseChunk</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">blocks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+<span class="n">IMAGE_LINK_RE</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\!\[&#39;</span>
+
+<span class="k">class</span> <span class="nc">AlberandTagsExtension</span><span class="p">(</span><span class="n">Extension</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">extendMarkdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">md</span><span class="p">):</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">blockprocessors</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Comments</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">parser</span><span class="p">),</span> <span class="s1">&#39;comments&#39;</span><span class="p">,</span> <span class="mi">175</span><span class="p">)</span>
+
+        <span class="c1"># Deregister default image processor and replace it with our custom one</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">inlinePatterns</span><span class="o">.</span><span class="n">deregister</span><span class="p">(</span><span class="s1">&#39;image_link&#39;</span><span class="p">)</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">inlinePatterns</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+                <span class="n">ImageInlineProcessor</span><span class="p">(</span><span class="n">IMAGE_LINK_RE</span><span class="p">,</span> <span class="n">md</span><span class="p">),</span> <span class="s1">&#39;image_link&#39;</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+
+<span class="n">MARKDOWN</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;extensions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">AlberandTagsExtension</span><span class="p">()],</span>
+  <span class="s1">&#39;extension_configs&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s1">&#39;markdown.extensions.extra&#39;</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s1">&#39;markdown.extensions.meta&#39;</span><span class="p">:</span> <span class="p">{},</span>
+  <span class="p">},</span>
+  <span class="s1">&#39;output_format&#39;</span><span class="p">:</span> <span class="s1">&#39;html5&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//markdown-custom-tags.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/markdown-custom-tags.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Add custom tags to markdown - python-markdown",
+      "description": "Wouldn't it be cool to add custom tags to markdown documents?",
+      "datePublished": "2023-03-28 00:00:00+02:00",
+      "dateModified": "2023-03-28 00:00:00",
+      "keywords": "markdown, python-markdown, pelican",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

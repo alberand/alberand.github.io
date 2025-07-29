@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+How to find good heatsink for a MOSFET - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="How to find good heatsink for a MOSFET" />
+		<meta name="date" content="2019-05-10 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2019-05-10 00:00:00+02:00" />
+		<meta property="og:title" content="How to find good heatsink for a MOSFET" />
+		<meta property="og:url" content="https://alberand.com/drafts/mosfet-heatsink.html" />
+
+			<meta property="og:description" content="How to find a appropriate heatsink for MOSFET" />
+			<meta name="description" content="How to find a appropriate heatsink for MOSFET" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> How to find good heatsink for a MOSFET </h1>
+
+      <time id="title-date">
+          10.05.2019
+      </time>
+  </header>
+  <p>In this little note I will try structure information about thermal resistance
+and how to find proper heatsink for transistor or diode. I will go a little bit
+in details on what is thermal resistance and how it used in calculations. If you
+find any mistakes or want to comment something please see end of the page.</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#before-starting-requirements">Before Starting - Requirements</a></li>
+<li><a href="#how-and-how-much-power-does-mosfet-dissipate">How and how much power does MOSFET dissipate?</a></li>
+<li><a href="#what-is-thermal-resistance">What is thermal resistance?</a></li>
+<li><a href="#how-much-heat-is-generated">How much heat is generated?</a></li>
+<li><a href="#which-heatsink-to-pick">Which heatsink to pick?</a></li>
+<li><a href="#references">References:</a></li>
+</ul>
+</div>
+<h2 id="overview">Overview</h2>
+<p>TODO lifetime of MOSFET depending on temp https://en.wikipedia.org/wiki/Negative-bias_temperature_instability</p>
+<p>Why to even have heatsink? There is a few reasons for that. First of all high
+temperature of the component can damage the circuit and device itself; Imagine
+200 C MOSFET sitting on your PCB. Secondly, too high working temperature of the
+component dramatically decrease its live and assures that it won't be reliable
+<a href="https://sound-au.com/heatsinks.htm">[6]</a>. </p>
+<h2 id="before-starting-requirements">Before Starting - Requirements</h2>
+<p>Let's decide what is working condition of our component. I will be looking at
+the P-channel MOSFET transistor <a href="https://datasheet.lcsc.com/szlcsc/Alpha-Omega-Semicon-AOS-AOD4185_C77993.pdf">AOD4185</a>.</p>
+<ul>
+<li>What is the drain current $I_D$? In my application it is 5 A at peak and 1 - 3
+  A on average.</li>
+<li>What is drain-source resistance? For AOD4185 it is $20\ m\Omega$</li>
+<li>What is maximum ambient temperature in which device is suppose to operate?
+  Let's take 25C (based on <a href="https://electronics.stackexchange.com/questions/39188/how-to-find-a-fitting-cooler-heatsink-for-a-mosfet">[1]</a>, <a href="https://electronics.stackexchange.com/questions/272718/mosfet-how-to-determine-if-a-heatsink-is-required">[2]</a> and <a href="https://sound-au.com/heatsinks.htm">[6]</a> it is suitable
+  value for the most cases). </li>
+<li>What is maximum MOSFET's temperature? Datasheet says that maximum working
+  temperature is 175C let's take about the middle 90C.</li>
+</ul>
+<h2 id="how-and-how-much-power-does-mosfet-dissipate">How and how much power does MOSFET dissipate?</h2>
+<p>bom bom electrons bom bom colision with other stuff bom bom heat</p>
+<h2 id="what-is-thermal-resistance">What is thermal resistance?</h2>
+<p>Thermal resistance show how big is temperature difference in two points for a
+Watt of applied power. For example, for given thermal resistance of 3 C/W the
+temperature will differ for 3 C for every applied Watt.</p>
+<!-- P = \frac{T_j - T_a}{R} = \frac{120^{\circ}\text{C}-
+25^{\circ}\text{C}}{52^{\circ}\text{C/W}} = 1.82 W -->
+
+<div id="dynamic_formula">
+\begin{equation*}
+P = \frac{T_j - T_a}{R} = \frac{\cssId{df_junction_temperature}{120}^{\circ}\text{C}-
+25^{\circ}\text{C}}{2.4^{\circ}\text{C/W}} = \cssId{df_max_power}{39.82} W 
+\end{equation*}
+</div>
+
+<p>So, the thermal resistance shows us how hard it is for energy to move
+through the material. Material with really high resistance is a good insulator
+and therefore is really bad for electronics as it will keep all the heat inside.</p>
+<p>\begin{equation<em>}
+\textrm{Thermal resistance} = \frac{\textrm{Thickness}}{\textrm{Thermal conductivity}}
+\end{equation</em>}</p>
+<p><strong>An example.</strong> From the equation above we see that resistance decrease with
+higher value of thermal conductivity. Let's pick two different materials which
+are definitely differently conduct heat. From <a href="https://en.wikipedia.org/wiki/List_of_thermal_conductivities">this table</a> we find out that
+thermal conductivity of glass and copper is $k_{glass} = 0.2$ and $k_{copper} =
+400$ $[W\cdot m^{-1}K^{-1}]$ accordingly. For the same thickness of the material
+the resistance will be $R_{glass} = 5$ and $R_{copper} = 0.0025\ [K/W]$.
+Enormous difference as expected. Therefore, the lower thermal resistance the
+more energy gets from the hot point to the cool one.</p>
+<p>In the ideal case when thermal resistance is zero the temperature will be the
+same on both sides of the material. If we imagine ideal heatsink connected
+directly to the junction of the transistor with $R = 0\ K/W$ the than we will be
+able to keep $T_{junction}$ equal to $T_{ambient}$.</p>
+<h2 id="how-much-heat-is-generated">How much heat is generated?</h2>
+<p><strong>Heat generated by transistor</strong>. So, our junction (PN-junction) carries some
+current. The junction has some resistance. Due to this resistance part of the
+current is converted into heat.  We would like to keep our junction calm and
+cool to not melt everything around and also keep it in its operating range
+(e.g. resistance, voltages, current).</p>
+<p>So, we would like to drain some heat from a junction to the surrounding
+environment. But firstly this heat has to move from the junction itself to the
+case of the transistor and then to to the heatsink (or directly into
+environment).</p>
+<p>We can start from calculation how much heat/power will be dissipated in our
+junction. To do so we just calculate power over the Drain-Source junction of the
+MOSFET $P = I^2R = 0.5\ [W]$, where I is the main current flow through the
+transistor. The R is resistance over the Drain-Source junction.</p>
+<p>Dissipation also depends on how frequent you switch the MOSFET. But it plays
+role only in case if your have medium or high frequency (values? nuh). This post
+doesn't include it.</p>
+<p><strong>A little bit of math</strong>. With the following equation we can calculate:</p>
+<ul>
+<li>How much power transistor can handle</li>
+<li>How hot will it be at certain power dissipation</li>
+</ul>
+<p>Let's look at some examples. Firstly, we need to choose maximum allowed
+temperature of the transistor. It is definitely shouldn't be higher than max
+temperature from datasheet $T_{j max}$. I took 100C as it is still far away from
+maximum and not so low as it will require much more sophisticated cooling. 
+We also need to pick some initial ambient temperature - let it be 25C. So, the
+temperature of a junction can be calculated with following equation:</p>
+<p>\begin{equation<em>}
+T_j = P_d (R_{jc} + R_{ca}) + T_a,\textrm{ where }T_a = 25C,\ T_j = 100C
+\end{equation</em>}</p>
+<p>$R_{jc}$ and $R_{ja}$ are thermal resistances from datasheet. $jc$ means
+junction-to-case and $ja$ means junction-to-ambient. The former tells as what is
+the thermal resistance of the transistor when energy moves from junction to
+case and the latter is from junction to ambient accordingly.</p>
+<p>\begin{equation}
+R_{ca} + R_{js} = \frac{T_j - T_a}{P_d}
+\end{equation}</p>
+<p><strong>Real case calculations</strong>. From datasheet we can find out that $R_{jc} = 2\
+C/W$ and $R_{ja} = 50\ C/W$. TODO what does it mean. </p>
+<p>The maximum dissipated power is 62.5 watts</p>
+<p>That can be suitable
+if you switching small loads. But if it is too much we need to calculate what
+thermal resistance should be to suite our conditions. As we can't cool
+transistor from inside we will need to cool the case. Therefore, we need to find
+Rca. From the equation above we can derive that:</p>
+<p>\begin{equation<em>}
+R_{ca} = \frac{T_j - T_a}{P_d} - R_{js} = \frac{100 - 25}{5^2\cdot0.04} - 2 = 73\ C/W
+\end{equation</em>}</p>
+<p>In this case we don't need heatsink as thermal resistance from junction to
+ambient is 50 C/W ($R_{ja}$ from datasheet). That means that by default for this
+particular MOSFET the temperature difference between junction and environment</p>
+<p>Let's look at what happens if TODO in 20 A:</p>
+<p>\begin{equation<em>}
+R_{ca} = \frac{T_j - T_a}{P_d} - R_{js} = \frac{90 - 25}{20^2\cdot0.04} - 2 = 2.68\ C/W
+\end{equation</em>}</p>
+<p>TODO <a href="https://www.infineon.com/dgdl/Infineon-an-994-AN-v06_00-EN.pdf?fileId=5546d46265f064ff01667ab5829d4d44">13</a> show that this package without heatsink can dissipate N Watts at
+max</p>
+<p>TODO Look into this https://www.thing-printer.com/power-dissipation-calculations-in-mosfets/</p>
+<h2 id="which-heatsink-to-pick">Which heatsink to pick?</h2>
+<p>The nicest one =)</p>
+<p>read this
+https://cz.mouser.com/datasheet/2/2/Aavid-Board-Level-Heatsinks-Catalog-2018-1507171.pdf</p>
+<h2 id="references">References:</h2>
+<ul>
+<li><a href="https://electronics.stackexchange.com/questions/39188/how-to-find-a-fitting-cooler-heatsink-for-a-mosfet">StackExchange Question 1</a></li>
+<li><a href="https://electronics.stackexchange.com/questions/272718/mosfet-how-to-determine-if-a-heatsink-is-required">StackExchange Question 2</a></li>
+<li><a href="https://electronics.stackexchange.com/questions/414157/mosfet-thermal-resistance">StackExchange Question 3</a></li>
+<li><a href="https://electronics.stackexchange.com/questions/246622/power-dissipation-of-power-mosfet">StackExchange Question 4</a></li>
+<li><a href="http://www.ti.com/lit/an/slva462/slva462.pdf">Understanding Thermal Dissipation and Design of a Heatsink</a></li>
+<li><a href="https://www.re-innovation.co.uk/docs/heatsink-calculations/">Heatsink Calculations</a></li>
+<li><a href="https://datasheet.lcsc.com/szlcsc/Alpha-Omega-Semicon-AOS-AOD4185_C77993.pdf">AOD4185 Datasheet</a></li>
+<li><a href="https://sound-au.com/heatsinks.htm">The Design of Heatsinks</a></li>
+<li><a href="https://en.wikipedia.org/wiki/List_of_thermal_conductivities">List of thermal conductivities</a></li>
+<li><a href="http://mustcalculate.com/electronics/heatsink.php">Heatsink Calculator</a></li>
+<li><a href="https://www.infineon.com/dgdl/mosfet.pdf?fileId=5546d462533600a4015357444e913f4f">Power MOSFET Basics</a></li>
+<li><a href="https://www.infineon.com/dgdl/Infineon-an-994-AN-v06_00-EN.pdf?fileId=5546d46265f064ff01667ab5829d4d44">Infineon - Maximizing the Effectiveness of your SMD Assemblies</a></li>
+</ul>
+<p>[7]: </p>
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://unpkg.com/d3-simple-slider"></script>
+
+<script>
+function interactive_mosfet(data) {
+    document.body.querySelector("#mosfet").append(data.documentElement);
+
+    var width = 800
+    var height = 300
+
+    var resistance = 2.4;
+    var temp_ambient = 25;
+    var temp_junction_max = 175;
+
+    var mf = d3.select("#svg1330")
+    mf.attr("width", width.toString())
+    mf.attr("height", height.toString())
+
+    var junction = mf.select("path#junction_heat") //.attr("opacity", "0")
+
+    function change_opacity(value){
+    var normalizer = 0.00342857143
+    var valueNorm = value*normalizer
+        console.log("change: " + valueNorm.toString())
+        junction.style("opacity", valueNorm.toString())
+    }
+
+    function change_formula(value){
+        var temperature = Math.trunc(value);
+        var max_power = ((value - temp_ambient)/resistance).toFixed(2);
+
+        window.document.getElementById("df_junction_temperature").innerText = temperature.toString();
+        window.document.getElementById("df_max_power").innerText = max_power.toString();
+    }
+
+    function update_vizualization(temperature, power){
+        var value = 0;
+        if(power){
+            value = power*resistance + temp_ambient;
+        } else{
+            value = temperature;
+        }
+        change_opacity(value);
+        change_formula(value);
+
+        if(value > temp_junction_max){
+            mf.select("text#oh_text").style("opacity", 1.0)
+            mf.select("#oh_background").style("opacity", 1.0)
+        } else {
+            mf.select("text#oh_text").style("opacity", 0.0)
+            mf.select("#oh_background").style("opacity", 0.0)
+        }
+    }
+
+    // Temperature slider
+    /*var sliderTemperature = d3
+      .sliderLeft()
+      .min(temp_ambient)
+      .max(temp_junction_max)
+      .height(height)
+      .ticks(4)
+      .default(120)
+      .on('onchange', val => {
+          update_vizualization(val, '');
+    });
+
+    var gSliderTemperature = mf
+      .append('g')
+      .attr("id", "slider-layer-temperature")
+      .attr('transform', 'translate(8,1) scale(0.1,0.1)');
+
+    gSliderTemperature.call(sliderTemperature);*/
+
+    // Power slider
+    var sliderPower = d3
+      .sliderLeft()
+      .min(0.19)
+      .max(100)
+      .height(height)
+      .ticks(4)
+      .default(39.82)
+      .on('onchange', val => {
+        update_vizualization('', val);
+    });
+
+    var gSliderPower = mf
+      .append('g')
+      .attr("id", "slider-layer-power")
+      .attr('transform', 'translate(18,1) scale(0.1,0.1)');
+
+    gSliderPower.call(sliderPower);
+
+    // Should be after adding slider
+    // mf.select("g#slider-layer-temperature")
+      // .selectAll("text")
+      // .attr("font-size", "20");
+
+    mf.select("g#slider-layer-power")
+      .selectAll("text")
+      .attr("font-size", "20");
+
+    // d3.select('p#value-vertical').text(d3.format('.2%')(sliderTemperature.value()));
+    d3.select('p#value-vertical').text(d3.format('.2%')(sliderPower.value()));
+
+}
+
+var mos_svg = d3.xml("../images/mosfet_handdrawn.svg", interactive_mosfet)
+</script>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//mosfet_heatsink.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/drafts/mosfet-heatsink.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "How to find good heatsink for a MOSFET",
+      "description": "How to find a appropriate heatsink for MOSFET",
+      "datePublished": "2019-05-10 00:00:00+02:00",
+      "dateModified": "2019-05-10 00:00:00",
+      "keywords": "",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

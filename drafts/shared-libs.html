@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+How does shared libraries works? - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="How does shared libraries works?" />
+		<meta name="date" content="2020-03-04 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2020-03-04 00:00:00+01:00" />
+		<meta property="og:title" content="How does shared libraries works?" />
+		<meta property="og:url" content="https://alberand.com/drafts/shared-libs.html" />
+
+			<meta property="og:description" content="Are shared libraries really shared between processes? Let's test it on" />
+			<meta name="description" content="Are shared libraries really shared between processes? Let's test it on" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> How does shared libraries works? </h1>
+
+      <time id="title-date">
+          04.03.2020
+      </time>
+  </header>
+  <p>the real processe
+Lang: en</p>
+<p>I was always wondering are the shared libraries really shared between processes?
+How is it possible that multiple processes can use the same part of memory and
+don't crush? Is glibc loaded only once in the system?</p>
+<p>In this note I will try to describe my journey of answering these questions with
+experiments.</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#what-is-pic-position-independent-code">What is PIC (position-independent code)?</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+<h3 id="what-is-pic-position-independent-code">What is PIC (position-independent code)?</h3>
+<p>tramolines</p>
+<p>TODO nice image of binary
+Interactive svg image?</p>
+<p>https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got</p>
+<p>https://www.airs.com/blog/archives/38</p>
+<p>https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html</p>
+<p>https://www.ibm.com/developerworks/linux/library/l-shlibs/index.html</p>
+<p>https://www.ibm.com/developerworks/linux/library/l-dll/index.html</p>
+<p>https://www.ibm.com/developerworks/linux/library/l-shobj/index.html</p>
+<h3 id="terminology">Terminology</h3>
+<p><strong>relocations</strong> are entries in binaries that are left to be filled in later
+<a href="https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html">4</a></p>
+<h3 id="references">References</h3>
+<ul>
+<li><a href="http://cseweb.ucsd.edu/~ricko/CSE131/the%20inside%20story%20on%20shared%20libraries%20and%20dynamic%20loading.pdf">Excelent article</a></li>
+<li>[][]</li>
+<li>[][]</li>
+<li>[][]</li>
+</ul>
+<p>[]: </p>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//how-shared-libraries-works.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/drafts/shared-libs.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "How does shared libraries works?",
+      "description": "Are shared libraries really shared between processes? Let's test it on",
+      "datePublished": "2020-03-04 00:00:00+01:00",
+      "dateModified": "2020-03-04 00:00:00",
+      "keywords": "linux, shared library, so, global offset table, linker",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

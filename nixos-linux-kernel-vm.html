@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Linux Kernel VM in NixOS - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Linux Kernel VM in NixOS" />
+		<meta name="date" content="2023-04-26 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2023-04-26 00:00:00+02:00" />
+		<meta property="og:title" content="Linux Kernel VM in NixOS" />
+		<meta property="og:url" content="https://alberand.com/nixos-linux-kernel-vm.html" />
+
+			<meta property="og:description" content="Development setup for Linux kernel on NixOS" />
+			<meta name="description" content="Development setup for Linux kernel on NixOS" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Linux Kernel VM in NixOS </h1>
+
+      <time id="title-date">
+          26.04.2023
+      </time>
+  </header>
+  <p>NixOS is quite flexible when it comes to creating VM. I haven't seen such an
+easy tool to create images. Basically, you define your system with nix
+configuration and then build it with a command. Nix already provides thousands
+of packages, all of which you can use in your VM.</p>
+<p>There are a few disadvantages though. For example, as Nix is always tries to
+build a clean system you will recompiling packages on any change. This is super
+inconvenient even for a minimal configuration. But there's definitely a way
+around it.</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#the-simplest-vm">The simplest VM</a></li>
+<li><a href="#adding-package-to-vm">Adding package to VM</a><ul>
+<li><a href="#customizing-packages">Customizing packages</a></li>
+</ul>
+</li>
+<li><a href="#custom-kernel-and-config">Custom Kernel and .config</a></li>
+<li><a href="#network-and-ssh">Network and SSH</a></li>
+<li><a href="#usb-and-disks-in-vm">USB and Disks in VM</a><ul>
+<li><a href="#disks-and-partitions">Disks and partitions</a></li>
+<li><a href="#usb-devices">USB devices</a></li>
+</ul>
+</li>
+<li><a href="#create-a-bootable-iso">Create a bootable ISO</a></li>
+<li><a href="#tips-tricks-to-configure-the-vm">Tips &amp; tricks to configure the VM</a><ul>
+<li><a href="#run-script-after-boot">Run script after boot</a></li>
+<li><a href="#environment-variables">Environment variables</a></li>
+</ul>
+</li>
+<li><a href="#my-setup">My setup</a></li>
+<li><a href="#full-configuration">Full configuration</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+<h2 id="the-simplest-vm">The simplest VM</h2>
+<p>Create a directory and a simple <code>vm.nix</code> with following content:</p>
+<p>
+            <div  class="highlight"  id="code-b5f95a1b-6cb3-11f0-b72a-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5f95a1b-6cb3-11f0-b72a-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="p">{</span>
+  <span class="ss">imports =</span> <span class="p">[</span>
+    <span class="l">&lt;nixpkgs/nixos/modules/profiles/qemu-guest.nix&gt;</span>
+    <span class="l">&lt;nixpkgs/nixos/modules/virtualisation/qemu-vm.nix&gt;</span>
+  <span class="p">];</span>
+
+  <span class="c1"># Root with empty password</span>
+  users<span class="o">.</span>extraUsers<span class="o">.</span>root<span class="o">.</span><span class="ss">password =</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+  users<span class="o">.</span><span class="ss">mutableUsers =</span> <span class="no">false</span><span class="p">;</span>
+
+  system<span class="o">.</span><span class="ss">stateVersion =</span> <span class="s2">&quot;22.11&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>In the file above we imported a pair of Nix configuration files. The
+<code>qemu-guest.nix</code> is quite simple - it just adds most of the <code>virtio</code> kernel
+modules, so the system can work under QEMU. The <code>qemu-guest.nix</code> defines a Nix
+module. This module defines how NixOS configuration from <code>vm.nix</code> is build into
+virtual machine. The module defines many parameters to tweak the final VM, most
+of them is defined under <code>virtualization.</code> (see examples below). You can find
+both of these files in the nixpkgs repo (<a href="https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/profiles/qemu-guest.nix">qemu-guest.nix</a> and
+<a href="https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/virtualisation/qemu-vm.nix">qemu-vm.nix</a>).</p>
+<p>Next, we set <code>root</code> password to be empty. The <code>mutableUsers</code> parameter tells Nix
+to have only those users which are defined in Nix configuration. In other words,
+your system will have only those users which are defined in <code>vm.nix</code>.</p>
+<p>The last parameter is used for internal Nix states. Just leave it like this.</p>
+<p>I also suggest to <code>git init .</code> to not lose any progress. This is actually enough
+to get a working VM. Compile it with following command:</p>
+<p>
+            <div  class="highlight"  id="code-b5f9b5a6-6cb3-11f0-9b6c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5f9b5a6-6cb3-11f0-9b6c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="go">                              what</span>
+<span class="go">                               to</span>
+<span class="go">           path to package    build     argument for build</span>
+<span class="go">           vvvvvvvvvvvvvvv     vv       vvvvvvvvvvvvvvvvvvvvvv</span>
+
+<span class="go">nix-build &#39;&lt;nixpkgs/nixos&gt;&#39; -A vm --arg configuration ./vm.nix</span>
+</code></pre></div>
+</p>
+<p>The command above will take quite some time, especially compiling the kernel.
+Eventually <code>nix-build</code> will create a <code>./result</code> directory. The directory contains
+shell script to run VM:</p>
+<p>
+            <div  class="highlight"  id="code-b5fa1032-6cb3-11f0-82de-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa1032-6cb3-11f0-82de-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="go">./result/bin/run-nixos-vm</span>
+<span class="go">qemu goes brrrrr....</span>
+</code></pre></div>
+</p>
+<p>To exit from the VM type <code>poweroff</code> command or <code>CTRL + A</code> followed by <code>X</code>
+to kill Qemu. I recommend to use <code>poweroff</code> as disk image can get corrupted and
+your guest system won't boot. Fix it by removing the <code>nixos.qcow2</code> image in the
+current directory and running VM again.</p>
+<h1 id="adding-package-to-vm">Adding package to VM</h1>
+<p>This is as easy as:</p>
+<p>
+            <div  class="highlight"  id="code-b5fa1cb7-6cb3-11f0-9cdd-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa1cb7-6cb3-11f0-9cdd-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>environment<span class="o">.</span><span class="ss">systemPackages =</span> <span class="k">with</span> pkgs<span class="p">;</span> <span class="p">[</span>
+  htop
+  util-linux
+  vim
+  tmux
+<span class="p">];</span>
+</code></pre></div>
+</p>
+<p>Much much easier than using Buildroot or any other tool. The system will have
+all necessary packages and will not be bloated as full-blown linux distribution.</p>
+<h2 id="customizing-packages">Customizing packages</h2>
+<p>Adding overlay on top of the packages, to build with your local changes and the
+process becomes amazingly easy to get a VM with custom environment. In the
+following example I have a local copy of <code>xfstests</code> sources which I modified.
+With overlay I tell Nix to use my local source instead one defined in the
+nixpkgs repository.</p>
+<p>
+            <div  class="highlight"  id="code-b5fa2b56-6cb3-11f0-a41b-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa2b56-6cb3-11f0-a41b-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="k">let</span>
+  <span class="c1"># Let&#39;s use local source for this package</span>
+  <span class="ss">xfstests-overlay =</span> <span class="p">(</span>final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+    <span class="ss">xfstests =</span> prev<span class="o">.</span>xfstests<span class="o">.</span>overrideAttrs <span class="p">(</span>prev<span class="p">:</span> <span class="p">{</span>
+      <span class="ss">version =</span> <span class="s2">&quot;git&quot;</span><span class="p">;</span>
+      <span class="ss">src =</span> <span class="l">/home/alberand/Projects/xfstests-dev</span><span class="p">;</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="k">in</span> <span class="p">{</span>
+
+<span class="o">...</span>
+
+nixpkgs<span class="o">.</span><span class="ss">overlays =</span> <span class="p">[</span>
+  xfstests-overlay-remote
+<span class="p">];</span>
+</code></pre></div>
+</p>
+<p>In Nix derivation is a package and overlay can be used to change build inputs of
+that package. With overlay you can change sources, version, metadata, build
+flags, append commands to build scripts etc.</p>
+<p>In the following example the sources of the <code>xfstests</code> derivation points to
+local repository. The <code>xfstests</code> derivation is already defined in NixOS packages
+store. We don't need to define how to build sources or install them. Check out
+<a href="https://github.com/NixOS/nixpkgs/blob/e506555f21b3a624e3c7af6c26d1467464107f7e/pkgs/tools/misc/xfstests/default.nix">all the parameters</a> set by this derivation.</p>
+<p>
+            <div  class="highlight"  id="code-b5fa3fcb-6cb3-11f0-91fd-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa3fcb-6cb3-11f0-91fd-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># Custom local xfstests</span>
+<span class="ss">xfstests-overlay =</span> <span class="p">(</span>final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+  <span class="ss">xfstests =</span> prev<span class="o">.</span>xfstests<span class="o">.</span>overrideAttrs <span class="p">(</span>prev<span class="p">:</span> <span class="p">{</span>
+    <span class="ss">version =</span> <span class="s2">&quot;git&quot;</span><span class="p">;</span>
+    <span class="ss">src =</span> fetchGit <span class="l">/home/alberand/xfstests-dev</span><span class="p">;</span>
+  <span class="p">});</span>
+<span class="p">});</span>
+</code></pre></div>
+</p>
+<p>The <code>prev</code> keyword is like input for our overlay. In this case <code>prev</code> points
+to <code>pkgs</code>. The <code>final</code> keyword is like output for our overlay - the state of the
+<code>pkgs</code> after modifications. In this example output is not used directly.</p>
+<p>This overlay takes <code>xfstests</code> derivation from the inputs and replaces <code>version</code>
+and <code>src</code> parameters of the derivation. When derivation is build new parameters
+will be used. The version can be exact <code>major.minor</code> or just <code>git</code> for not tagged
+git tree. The <code>nix-build</code> will tell you exact version if you don't know what to
+specify. There's many <a href="https://nixos.org/manual/nixpkgs/stable/#chap-pkgs-fetchers">available fetchers</a> to get sources.</p>
+<p>If you use local sources somewhere in the flake you would probably need to
+specify <code>--impure</code> keyword. This will tell nix to not to be that strict with
+version of the sources.</p>
+<h1 id="custom-kernel-and-config">Custom Kernel and .config</h1>
+<p>Linux Kernel is provided as derivation and has many helpful derivations already
+in store. To build kernel from your local source tree with local <code>.config</code>
+define following package in the <code>let</code> section:</p>
+<p>
+            <div  class="highlight"  id="code-b5fa526d-6cb3-11f0-8739-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa526d-6cb3-11f0-8739-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="ss">kernel-custom =</span> pkgs<span class="o">.</span>linuxKernel<span class="o">.</span>customPackage <span class="p">{</span>
+  <span class="c1"># Note that nix uses this version to install relevant tools (e.g. flex).</span>
+  <span class="c1"># You can specify &#39;git&#39; not to change it every time you change the verions</span>
+  <span class="c1"># but I haven&#39;t got it working properly. Nix will tell you which version</span>
+  <span class="c1"># you should specify if you don&#39;t know.</span>
+  <span class="ss">version =</span> <span class="s2">&quot;6.2.0-rc2&quot;</span><span class="p">;</span>
+  <span class="ss">configfile =</span> <span class="l">/home/alberand/kernel/.config</span><span class="p">;</span>
+  <span class="ss">src =</span> fetchGit <span class="l">/home/alberand/kernel</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+</p>
+<p>and then set this package as default kernel in the config section:</p>
+<p>
+            <div  class="highlight"  id="code-b5fa6519-6cb3-11f0-b0f8-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa6519-6cb3-11f0-b0f8-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>boot<span class="o">.</span><span class="ss">kernelPackages =</span> kernel-custom<span class="p">;</span>
+</code></pre></div>
+</p>
+<p>However, one problem with this setup is that any change to the <code>.config</code> or
+kernel tree triggers Nix to rebuild the kernel. The rebuild happens because Nix
+tries to make a clean build.</p>
+<p>VM script which is created by <code>nix-build</code> command can use other pre-compiled
+kernel, not built by <code>nix-build</code>. To achieve this do the following:</p>
+<ol>
+<li>
+<p>Remove package which was defined above and <code>boot.kernelPackage</code> setting. Fix
+   the version of the kernel on the version of your tree. For example, if you
+   are building somewhere v6.2 kernel you should do:</p>
+<p>
+            <div  class="highlight"  id="code-b60c6dcf-6cb3-11f0-9b1f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60c6dcf-6cb3-11f0-9b1f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="nx">kernelPackages</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">pkgs</span><span class="p">.</span><span class="nx">linuxKernel</span><span class="p">.</span><span class="nx">packagesFor</span><span class="w"> </span><span class="nx">pkgs</span><span class="p">.</span><span class="nx">linuxKernel</span><span class="p">.</span><span class="nx">kernels</span><span class="p">.</span><span class="nx">linux_6_2</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<p>The version should correspond to your kernel as nix will build all modules
+for the version defined in nix configuration.</p>
+</li>
+<li>
+<p>Compile Linux kernel as you usually do to get <code>bzImage</code>. Don't forget to
+   enable all necessary features for QEMU build. See <a href="https://github.com/NixOS/nixpkgs/blob/23968f4c5dba6a59ec7b54fe2dcaebaccefb8bfe/nixos/modules/virtualisation/qemu-vm.nix#L1158-L1176">features</a> which Nix
+   expects to be enable.</p>
+</li>
+<li>
+<p>Define hostname for VM and build it with <code>nix-build</code></p>
+<p>
+            <div  class="highlight"  id="code-b60cd809-6cb3-11f0-907f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60cd809-6cb3-11f0-907f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>networking.hostName = &quot;vm&quot;;
+</code></pre></div>
+</p>
+</li>
+<li>
+<p>Export environment variable with path to your kernel and run the VM:</p>
+<p>
+            <div  class="highlight"  id="code-b60e0c8b-6cb3-11f0-85b4-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60e0c8b-6cb3-11f0-85b4-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="w"> </span><span class="o">$</span><span class="w"> </span><span class="k">export</span><span class="w"> </span><span class="n">NIXPKGS_QEMU_KERNEL_vm</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">arch</span><span class="o">/</span><span class="n">x86</span><span class="o">/</span><span class="n">boot</span><span class="o">/</span><span class="n">bzImage</span>
+<span class="w"> </span><span class="o">$</span><span class="w"> </span><span class="o">./</span><span class="n">result</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">run</span><span class="o">-</span><span class="n">vm</span><span class="o">-</span><span class="n">vm</span>
+</code></pre></div>
+</p>
+<p>The name is <code>NIXPKGS_QEMU_KERNEL_&lt;networking.hostName&gt;</code></p>
+</li>
+</ol>
+<p>I've tried to use CCache with Nix to make its kernel build faster, but that
+doesn't seem to work yet. Note that it highly depend on your needs, the modules
+can be loaded afterwords when VM already booted. I was looking for a way to
+quickly modify the kernel and fire up the VM with testsuite.</p>
+<h1 id="network-and-ssh">Network and SSH</h1>
+<p>Create interface on the host side, assuming you are on NixOS (this is not for
+<code>vm.nix</code>):</p>
+<p>
+            <div  class="highlight"  id="code-b5fa71fc-6cb3-11f0-aeb1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa71fc-6cb3-11f0-aeb1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># This goes into your host configuration.nix</span>
+networking<span class="o">.</span>interfaces<span class="o">.</span><span class="ss">tap0 =</span> <span class="p">{</span>
+  <span class="ss">name =</span> <span class="s2">&quot;tap0&quot;</span><span class="p">;</span>
+  <span class="ss">virtual =</span> <span class="no">true</span><span class="p">;</span>
+  <span class="ss">virtualType =</span> <span class="s2">&quot;tap&quot;</span><span class="p">;</span>
+  <span class="ss">virtualOwner =</span> <span class="s2">&quot;alberand&quot;</span><span class="p">;</span>
+<span class="p">};</span>
+
+networking<span class="o">.</span>interfaces<span class="o">.</span><span class="ss">tap0 =</span> <span class="p">{</span>
+  <span class="ss">ipv4 =</span> <span class="p">{</span>
+    <span class="ss">addresses =</span> <span class="p">[{</span>
+      <span class="ss">address =</span> <span class="s2">&quot;192.168.10.1&quot;</span><span class="p">;</span>
+      <span class="ss">prefixLength =</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="p">}];</span>
+  <span class="p">};</span>
+<span class="p">};</span>
+</code></pre></div>
+</p>
+<p>Then set IP static address for VM and enable SSH server (in <code>vm.nix</code>):</p>
+<p>
+            <div  class="highlight"  id="code-b5fa8923-6cb3-11f0-99b8-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa8923-6cb3-11f0-99b8-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># This goes into your vm.nix</span>
+networking<span class="o">.</span>interfaces<span class="o">.</span><span class="ss">eth1 =</span> <span class="p">{</span>
+  ipv4<span class="o">.</span><span class="ss">addresses =</span> <span class="p">[{</span>
+    <span class="ss">address =</span> <span class="s2">&quot;192.168.10.2&quot;</span><span class="p">;</span>
+    <span class="ss">prefixLength =</span> <span class="mi">24</span><span class="p">;</span>
+  <span class="p">}];</span>
+<span class="p">};</span>
+services<span class="o">.</span>openssh<span class="o">.</span><span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<p>If you are not on NixOS, try following my guide on <a href="https://alberand.com/host-only-networking-set-up-for-qemu-hypervisor.html">setting up host network with
+QEMU</a>.</p>
+<h1 id="usb-and-disks-in-vm">USB and Disks in VM</h1>
+<h2 id="disks-and-partitions">Disks and partitions</h2>
+<p>To share partition with VM add an option to Qemu:</p>
+<p>
+            <div  class="highlight"  id="code-b5fa9b6a-6cb3-11f0-a82a-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5fa9b6a-6cb3-11f0-a82a-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>virtualisation<span class="o">.</span>qemu<span class="o">.</span><span class="ss">options =</span> <span class="p">[</span>
+  <span class="s2">&quot;-hdc /dev/sda4&quot;</span>
+  <span class="s2">&quot;-hdd /dev/sda5&quot;</span>
+<span class="p">];</span>
+</code></pre></div>
+</p>
+<p>Or if you need just a dummy space you can add pre-allocated disk image or ask
+Nix to create an empty partitions:</p>
+<p>
+            <div  class="highlight"  id="code-b5faab66-6cb3-11f0-b239-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b5faab66-6cb3-11f0-b239-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># Nix will create 2 virtual disks</span>
+virtualisation<span class="o">.</span><span class="ss">emptyDiskImages =</span> <span class="p">[</span> <span class="mi">8192</span> <span class="mi">4096</span> <span class="p">];</span> <span class="c1"># Create 2 virtual disk with 8G and 4G</span>
+
+<span class="c1"># Append images as partitions to VM</span>
+virtualisation<span class="o">.</span>qemu<span class="o">.</span>options<span class="o">.</span><span class="ss">drives =</span> <span class="p">[</span>
+  <span class="p">{</span> <span class="ss">name =</span> <span class="s2">&quot;vdc&quot;</span><span class="p">;</span> <span class="ss">file =</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nb">toString</span> <span class="o">.</span><span class="l">/test.img</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">{</span> <span class="ss">name =</span> <span class="s2">&quot;vdb&quot;</span><span class="p">;</span> <span class="ss">file =</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nb">toString</span> <span class="o">.</span><span class="l">/scratch.img</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">];</span>
+</code></pre></div>
+</p>
+<h2 id="usb-devices">USB devices</h2>
+<p>To pass a USB device to VM there's three things need to be done:</p>
+<ul>
+<li>Find out device Bus, Port, Vendor ID, and Product ID</li>
+<li>Configure permission to the USB device</li>
+<li>Add configuration to QEMU</li>
+</ul>
+<p><strong>Device BUS and PORT</strong>. we need to find out metadata of the device to identify
+it. This can be done with <code>lsusb</code> utility. Before connecting your device run
+<code>lsusb</code>, then connect the device and run it again. Compare to list to find out
+what's new. The name of the device could also give a hint (like manufacturer
+name or that it is keyboard). Save device Bus, Port, Vendor ID, and Product ID:</p>
+<p>
+            <div  class="highlight"  id="code-b60985f9-6cb3-11f0-9c7e-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60985f9-6cb3-11f0-9c7e-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>       bus        port    vend prod
+       vvv        vvv     vvvv vvvv
+
+   Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+   Bus 003 Device 124: ID 0424:2514 Microchip Technology, Inc. (formerly SMSC) USB 2.0 Hub
+   Bus 003 Device 123: ID 413c:2113 Dell Computer Corp. KB216 Wired Keyboard
+   Bus 003 Device 122: ID 03f0:0941 HP, Inc X500 Optical Mouse
+   Bus 003 Device 121: ID 1a40:0101 Terminus Technology Inc. Hub
+   Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+&gt;&gt; Bus 002 Device 003: ID 8564:1000 Transcend Information, Inc. JetFlash
+   Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+   Bus 001 Device 006: ID 1b3f:2002 Generalplus Technology Inc. 808 Camera
+   Bus 001 Device 002: ID 8087:0032 Intel Corp. AX210 Bluetooth
+   Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+</code></pre></div>
+</p>
+<p>Note that Bus and Device number could change depending on which USB port you
+use!</p>
+<p><strong>Permissions</strong>. To configure permissions since only root has access to USB
+devices by default. To achieve this we can use <code>udev</code>. This utility is
+responsible for preparing device for use when hardware is connected - for
+example loading kernel driver. We need to create a rule to tell <code>udev</code> make our
+device accessible for our user. I recommend using <code>vendorid</code> and <code>productid</code>
+attributes to always uniquely identify the device:</p>
+<p>
+            <div  class="highlight"  id="code-b60a0082-6cb3-11f0-ad0f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a0082-6cb3-11f0-ad0f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code># 32G flash drive
+#
+# From lsusb:
+# Bus 002 Device 003: ID 8564:1000 Transcend Information, Inc. JetFlash
+#
+#                                   vvvvvvvvvvvvvvvvvvvvvvvvvv change vvvvvvvvvvvvvvvvvvvvvvvvvv
+#                                   vvvv                     vvvv                       vvvvvvvv
+SUBSYSTEMS==&quot;usb&quot;, ATTR{idVendor}==&quot;8564&quot;, ATTR{idProduct}==&quot;1000&quot;, MODE=&quot;0660&quot;, OWNER=&quot;alberand&quot;
+</code></pre></div>
+</p>
+<p>Add this rule to <code>/etc/udev/rules.d/99-vm.rules</code> or on NixOS to
+<code>services.udev.extraRules</code>. Lastly, let's reload the rules so new rule is
+applied:</p>
+<p>
+            <div  class="highlight"  id="code-b60a0c41-6cb3-11f0-ba88-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a0c41-6cb3-11f0-ba88-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>udevadm<span class="w"> </span>control<span class="w"> </span>--reload-rules<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger
+$<span class="w"> </span><span class="c1"># Check that owner changed (path could differ!):</span>
+$<span class="w"> </span>ls<span class="w"> </span>-la<span class="w"> </span>/dev/bus/usb/002
+total<span class="w"> </span><span class="m">0</span>
+drwxr-xr-x<span class="w"> </span><span class="m">2</span><span class="w"> </span>root<span class="w">     </span>root<span class="w">       </span><span class="m">80</span><span class="w"> </span>Apr<span class="w">  </span><span class="m">2</span><span class="w"> </span><span class="m">14</span>:36<span class="w"> </span>.
+drwxr-xr-x<span class="w"> </span><span class="m">6</span><span class="w"> </span>root<span class="w">     </span>root<span class="w">      </span><span class="m">120</span><span class="w"> </span>Mar<span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">11</span>:55<span class="w"> </span>..
+crw-rw-r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>root<span class="w">     </span>root<span class="w"> </span><span class="m">189</span>,<span class="w"> </span><span class="m">128</span><span class="w"> </span>Apr<span class="w">  </span><span class="m">2</span><span class="w"> </span><span class="m">14</span>:38<span class="w"> </span><span class="m">001</span>
+crw-rw----<span class="w"> </span><span class="m">1</span><span class="w"> </span>alberand<span class="w"> </span>root<span class="w"> </span><span class="m">189</span>,<span class="w"> </span><span class="m">130</span><span class="w"> </span>Apr<span class="w">  </span><span class="m">2</span><span class="w"> </span><span class="m">14</span>:39<span class="w"> </span><span class="m">003</span>
+</code></pre></div>
+</p>
+<p>For more details on <code>udev</code> see <a href="https://wiki.archlinux.org/title/udev">arch wiki</a>.</p>
+<p><strong>QEMU Configuration</strong>. Add one of the following line with changed parameters to
+<code>virtualisation.qemu.options</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b60a3057-6cb3-11f0-a2ad-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a3057-6cb3-11f0-a2ad-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="s2">&quot;-usb -device usb-host,hostbus=2,hostport=4&quot;</span>
+<span class="c1"># or</span>
+<span class="s2">&quot;-usb -device usb-host,vendorid=0x8564,productid=0x1000&quot;</span>
+</code></pre></div>
+</p>
+<p>Boot your VM and check that device is there with <code>lsusb</code>, it should have same
+vendor and product IDs.</p>
+<h1 id="create-a-bootable-iso">Create a bootable ISO</h1>
+<p>Time to deploy VM to cloud or other machine. This is as easy as:</p>
+<p>
+            <div  class="highlight"  id="code-b60a440b-6cb3-11f0-8440-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a440b-6cb3-11f0-8440-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>$<span class="w"> </span>nix-shell<span class="w"> </span>-p<span class="w"> </span>nixos-generators<span class="w"> </span>--run<span class="w"> </span><span class="s2">&quot;nixos-generate --format iso \</span>
+<span class="s2">    --configuration ./vm.nix -o result&quot;</span>
+</code></pre></div>
+</p>
+<p>Test it with:</p>
+<p>
+            <div  class="highlight"  id="code-b60a51e7-6cb3-11f0-9198-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a51e7-6cb3-11f0-9198-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>$<span class="w"> </span>nix-shell<span class="w"> </span>-p<span class="w"> </span>qemu
+$<span class="w"> </span>qemu-system-x86_64<span class="w"> </span>-enable-kvm<span class="w"> </span>-m<span class="w"> </span><span class="m">256</span><span class="w"> </span>-cdrom<span class="w"> </span>result/iso/nixos-*.iso
+</code></pre></div>
+</p>
+<p>Flash it to disk:</p>
+<p>
+            <div  class="highlight"  id="code-b60a61c6-6cb3-11f0-a53e-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a61c6-6cb3-11f0-a53e-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="w">                              </span>your<span class="w"> </span>disk
+<span class="w">                                 </span>vvv
+$<span class="w"> </span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>result/iso/*.iso<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
+$<span class="w"> </span>sync
+</code></pre></div>
+</p>
+<p>The <code>nixos-generators</code> packages have many output formats. You can create AWS
+images, docker containers, iso, google compute cloud images etc. Note, however,
+that not every configuration would work for every output format. For example, if
+you define that the image is VM guest (with imports and virtualisation. params)
+it won't probably boot on bare metal without manual fixes.</p>
+<h1 id="tips-tricks-to-configure-the-vm">Tips &amp; tricks to configure the VM</h1>
+<h2 id="run-script-after-boot">Run script after boot</h2>
+<p>Example of systemd service started on boot. You can run some tests with it and
+then call shutdown in <code>postStop</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b60a7493-6cb3-11f0-9f36-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a7493-6cb3-11f0-9f36-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>systemd<span class="o">.</span>services<span class="o">.</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+  <span class="ss">serviceConfig =</span> <span class="p">{</span>
+    <span class="ss">Type =</span> <span class="s2">&quot;oneshot&quot;</span><span class="p">;</span>
+    <span class="ss">StandardOutput =</span> <span class="s2">&quot;tty&quot;</span><span class="p">;</span>
+    <span class="ss">StandardError =</span> <span class="s2">&quot;tty&quot;</span><span class="p">;</span>
+    <span class="ss">User =</span> <span class="s2">&quot;root&quot;</span><span class="p">;</span>
+    <span class="ss">Group =</span> <span class="s2">&quot;root&quot;</span><span class="p">;</span>
+    <span class="ss">WorkingDirectory =</span> <span class="s2">&quot;/root&quot;</span><span class="p">;</span>
+  <span class="p">};</span>
+  <span class="ss">after =</span> <span class="p">[</span> <span class="s2">&quot;network.target&quot;</span> <span class="s2">&quot;network-online.target&quot;</span> <span class="s2">&quot;local-fs.target&quot;</span> <span class="p">];</span>
+  <span class="ss">wants =</span> <span class="p">[</span> <span class="s2">&quot;network.target&quot;</span> <span class="s2">&quot;network-online.target&quot;</span> <span class="s2">&quot;local-fs.target&quot;</span> <span class="p">];</span>
+  <span class="ss">wantedBy =</span> <span class="p">[</span> <span class="s2">&quot;multi-user.target&quot;</span> <span class="p">];</span>
+  <span class="ss">postStop =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">    echo &quot;Bye bye&quot;</span>
+<span class="s1">  &#39;&#39;</span><span class="p">;</span>
+  <span class="ss">script =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">    echo &quot;Hello I do work&quot;</span>
+
+<span class="s1">    # Beep beep... Human... back to work</span>
+<span class="s1">    echo -ne &#39;\007&#39;</span>
+<span class="s1">  &#39;&#39;</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+</p>
+<h2 id="environment-variables">Environment variables</h2>
+<p>To define environment variable use following expression:</p>
+<p>
+            <div  class="highlight"  id="code-b60a993d-6cb3-11f0-b108-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60a993d-6cb3-11f0-b108-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>environment<span class="o">.</span>variables<span class="o">.</span><span class="ss">NAME =</span> <span class="s2">&quot;thisisname&quot;</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<h1 id="my-setup">My setup</h1>
+<p>I was trying to create a VM which I start with one command, the VM takes kernel
+from the current working directory and runs <code>xfstests</code> against it.</p>
+<p>Then, I decided to write a script to add more features. Now in my working
+directory I have <code>vmtest</code> command. This commands takes configuration from
+<code>.vmtest</code> in the current dir.</p>
+<p>The configuration contains path to kernel I want to run, list of modules to
+load, suite of <code>xfstests</code> to run, and QEMU options such as disk partitions. This
+will probably grow further as I will need to also will need to change versions
+of xfstests and other packages. You can find my <a href="https://github.com/alberand/nix-kernel-vm">project here</a>.</p>
+<h1 id="full-configuration">Full configuration</h1>
+<p>To compile:</p>
+<p>
+            <div  class="highlight"  id="code-b60aa752-6cb3-11f0-b830-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60aa752-6cb3-11f0-b830-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="go">nix-build &#39;&lt;nixpkgs/nixos&gt;&#39; -A vm --arg configuration ./vm.nix</span>
+</code></pre></div>
+</p>
+<p>To run:</p>
+<p>
+            <div  class="highlight"  id="code-b60ab37b-6cb3-11f0-b5bd-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60ab37b-6cb3-11f0-b5bd-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="go">./result/bin/run-nixos-vm</span>
+</code></pre></div>
+</p>
+<p>Configuration:</p>
+<p>
+            <div  class="highlight"  id="code-b60ac320-6cb3-11f0-886b-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b60ac320-6cb3-11f0-886b-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> config<span class="p">,</span> modulesPath<span class="p">,</span> pkgs<span class="p">,</span> lib<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="k">let</span>
+
+<span class="c1"># Custom local xfstests</span>
+<span class="ss">xfstests-overlay =</span> <span class="p">(</span>final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+  <span class="ss">xfstests =</span> prev<span class="o">.</span>xfstests<span class="o">.</span>overrideAttrs <span class="p">(</span>prev<span class="p">:</span> <span class="p">{</span>
+    <span class="ss">version =</span> <span class="s2">&quot;git&quot;</span><span class="p">;</span>
+    <span class="ss">src =</span> fetchGit <span class="l">/home/alberand/xfstests-dev</span><span class="p">;</span>
+  <span class="p">});</span>
+<span class="p">});</span>
+
+<span class="c1"># Custom remote xfstests</span>
+<span class="ss">xfstests-overlay-remote =</span> <span class="p">(</span>final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span>
+  <span class="ss">xfstests =</span> prev<span class="o">.</span>xfstests<span class="o">.</span>overrideAttrs <span class="p">(</span>prev<span class="p">:</span> <span class="p">{</span>
+    <span class="ss">version =</span> <span class="s2">&quot;git&quot;</span><span class="p">;</span>
+    <span class="ss">src =</span> pkgs<span class="o">.</span>fetchFromGitHub <span class="p">{</span>
+      <span class="ss">owner =</span> <span class="s2">&quot;alberand&quot;</span><span class="p">;</span>
+      <span class="ss">repo =</span> <span class="s2">&quot;xfstests&quot;</span><span class="p">;</span>
+      <span class="ss">rev =</span> <span class="s2">&quot;6e6fb1c6cc619afb790678f9530ff5c06bb8f24c&quot;</span><span class="p">;</span>
+      <span class="ss">sha256 =</span> <span class="s2">&quot;OjkO7wTqToY1/U8GX92szSe7mAIL+61NoZoBiU/pjPE=&quot;</span><span class="p">;</span>
+    <span class="p">};</span>
+  <span class="p">});</span>
+<span class="p">});</span>
+
+<span class="ss">kernel-custom =</span> pkgs<span class="o">.</span>linuxKernel<span class="o">.</span>customPackage <span class="p">{</span>
+  <span class="c1"># Note that nix uses this version to install relevant tools (e.g. flex).</span>
+  <span class="c1"># You can specify &#39;git&#39; not to change it every time you change the verions</span>
+  <span class="c1"># but I haven&#39;t got it working properly. Nix will tell you which version</span>
+  <span class="c1"># you should specify if you don&#39;t know.</span>
+  <span class="ss">version =</span> <span class="s2">&quot;6.2.0-rc2&quot;</span><span class="p">;</span>
+  <span class="ss">configfile =</span> <span class="l">/home/alberand/kernel/.config</span><span class="p">;</span>
+  <span class="ss">src =</span> fetchGit <span class="l">/home/alberand/kernel</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">in</span>
+<span class="p">{</span>
+  <span class="ss">imports =</span> <span class="p">[</span>
+    <span class="p">(</span>modulesPath <span class="o">+</span> <span class="s2">&quot;/profiles/qemu-guest.nix&quot;</span><span class="p">)</span>
+    <span class="p">(</span>modulesPath <span class="o">+</span> <span class="s2">&quot;/virtualisation/qemu-vm.nix&quot;</span><span class="p">)</span>
+  <span class="p">];</span>
+
+  <span class="ss">boot =</span> <span class="p">{</span>
+    <span class="ss">kernelParams =</span> <span class="p">[</span><span class="s2">&quot;console=ttyS0,115200n8&quot;</span> <span class="s2">&quot;console=ttyS0&quot;</span><span class="p">];</span>
+    <span class="ss">consoleLogLevel =</span> lib<span class="o">.</span>mkDefault <span class="mi">7</span><span class="p">;</span>
+    <span class="c1"># This is happens before systemd</span>
+    <span class="ss">postBootCommands =</span> <span class="s2">&quot;echo &#39;Not much to do before systemd :)&#39; &gt; /dev/kmsg&quot;</span><span class="p">;</span>
+    crashDump<span class="o">.</span><span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+
+    <span class="c1"># Set my custom kernel</span>
+    <span class="c1"># kernelPackages = kernel-custom;</span>
+    <span class="c1"># or pin the version</span>
+    <span class="ss">kernelPackages =</span> pkgs<span class="o">.</span>linuxKernel<span class="o">.</span>packagesFor pkgs<span class="o">.</span>linuxKernel<span class="o">.</span>kernels<span class="o">.</span>linux_6_0<span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1"># Auto-login with empty password</span>
+  users<span class="o">.</span>extraUsers<span class="o">.</span>root<span class="o">.</span><span class="ss">initialHashedPassword =</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+  services<span class="o">.</span>getty<span class="o">.</span><span class="ss">autologinUser =</span> lib<span class="o">.</span>mkDefault <span class="s2">&quot;root&quot;</span><span class="p">;</span>
+
+  networking<span class="o">.</span>firewall<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+  networking<span class="o">.</span><span class="ss">hostName =</span> <span class="s2">&quot;vm&quot;</span><span class="p">;</span>
+  networking<span class="o">.</span><span class="ss">useDHCP =</span> <span class="no">false</span><span class="p">;</span>
+  services<span class="o">.</span>getty<span class="o">.</span><span class="ss">helpLine =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">    Log in as &quot;root&quot; with an empty password.</span>
+<span class="s1">    If you are connect via serial console:</span>
+<span class="s1">    Type CTRL-A X to exit QEMU</span>
+<span class="s1">  &#39;&#39;</span><span class="p">;</span>
+
+  <span class="c1"># Not needed in VM</span>
+  documentation<span class="o">.</span>doc<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+  documentation<span class="o">.</span>man<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+  documentation<span class="o">.</span>nixos<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+  documentation<span class="o">.</span>info<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+  programs<span class="o">.</span>bash<span class="o">.</span><span class="ss">enableCompletion =</span> <span class="no">false</span><span class="p">;</span>
+  programs<span class="o">.</span>command-not-found<span class="o">.</span><span class="ss">enable =</span> <span class="no">false</span><span class="p">;</span>
+
+  <span class="c1"># Do something after systemd started</span>
+  systemd<span class="o">.</span>services<span class="o">.</span><span class="ss">foo =</span> <span class="p">{</span>
+    serviceConfig<span class="o">.</span><span class="ss">Type =</span> <span class="s2">&quot;oneshot&quot;</span><span class="p">;</span>
+    <span class="ss">wantedBy =</span> <span class="p">[</span> <span class="s2">&quot;multi-user.target&quot;</span> <span class="p">];</span>
+    <span class="ss">script =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">      echo &#39;This service runs right near login&#39; &gt; /dev/kmsg</span>
+<span class="s1">    &#39;&#39;</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1"># Setup envirionment</span>
+  environment<span class="o">.</span>variables<span class="o">.</span><span class="ss">TERM =</span> <span class="s2">&quot;xterm&quot;</span><span class="p">;</span>
+
+  <span class="ss">virtualisation =</span> <span class="p">{</span>
+    <span class="ss">diskSize =</span> <span class="mi">20000</span><span class="p">;</span> <span class="c1"># MB</span>
+    <span class="ss">memorySize =</span> <span class="mi">4096</span><span class="p">;</span> <span class="c1"># MB</span>
+    <span class="ss">cores =</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="ss">writableStoreUseTmpfs =</span> <span class="no">false</span><span class="p">;</span>
+    <span class="ss">useDefaultFilesystems =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="c1"># Run qemu in the terminal not in Qemu GUI (to exit CTRL + A -&gt; X)</span>
+    <span class="ss">graphics =</span> <span class="no">false</span><span class="p">;</span>
+    <span class="c1"># Create 2 virtual disk with 8G and 4G (run &#39;lsblk&#39; in VM)</span>
+    <span class="ss">emptyDiskImages =</span> <span class="p">[</span> <span class="mi">8192</span> <span class="mi">4096</span> <span class="p">];</span>
+
+    <span class="ss">qemu =</span> <span class="p">{</span>
+      <span class="ss">options =</span> <span class="p">[</span>
+        <span class="c1"># I want to try a kernel which I compiled somewhere</span>
+        <span class="c1">#&quot;-kernel /home/user/my-linux/arch/x86/boot/bzImage&quot;</span>
+        <span class="c1">#&quot;-kernel /home/alberand/my-linux/arch/x86/boot/bzImage&quot;</span>
+        <span class="c1"># OR</span>
+        <span class="c1"># You can set env. variable not to change configuration everytime:</span>
+        <span class="c1">#   export NIXPKGS_QEMU_KERNEL_vm=/path/to/arch/x86/boot/bzImage</span>
+        <span class="c1"># The name is NIXPKGS_QEMU_KERNEL_&lt;networking.hostName&gt;</span>
+
+        <span class="c1"># Append real partitions to VM</span>
+        <span class="c1"># &quot;-hdc /dev/sda4&quot;</span>
+        <span class="c1"># &quot;-hdd /dev/sda5&quot;</span>
+
+        <span class="c1"># better handling of console interface</span>
+        <span class="s2">&quot;-serial mon:stdio&quot;</span>
+      <span class="p">];</span>
+
+      <span class="c1"># Append images as partition to VM</span>
+      <span class="c1"># Don&#39;t forget to create images. For example, with:</span>
+      <span class="c1">#   xfs_io -f -c &quot;falloc 0 10g&quot; test.img</span>
+      <span class="c1"># OR much slower version:</span>
+      <span class="c1">#   dd if=/dev/null of=test.img bs=4k count=2450</span>
+      <span class="ss">drives =</span> <span class="p">[</span>
+        <span class="c1">#{ name = &quot;vdc&quot;; file = &quot;${toString ./test.img}&quot;; }</span>
+        <span class="c1">#{ name = &quot;vdb&quot;; file = &quot;${toString ./scratch.img}&quot;; }</span>
+      <span class="p">];</span>
+    <span class="p">};</span>
+
+    <span class="ss">sharedDirectories =</span> <span class="p">{</span>
+      <span class="c1"># fstests = {</span>
+      <span class="c1">#  source = &quot;/home/alberand/Projects/xfstests-dev&quot;;</span>
+      <span class="c1">#  target = &quot;/root/xfstests&quot;;</span>
+      <span class="c1"># };</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+
+  <span class="c1"># Add packages to VM</span>
+  environment<span class="o">.</span><span class="ss">systemPackages =</span> <span class="k">with</span> pkgs<span class="p">;</span> <span class="p">[</span>
+    htop
+      util-linux
+      xfstests
+      vim
+      tmux
+      fsverity-utils
+      trace-cmd
+      perf-tools
+      linuxPackages_latest<span class="o">.</span>perf
+      openssl
+  <span class="p">];</span>
+
+
+  <span class="c1"># Apply overlay on the package (use different src as we replaced &#39;src = &#39;)</span>
+  nixpkgs<span class="o">.</span><span class="ss">overlays =</span> <span class="p">[</span>
+    xfstests-overlay-remote
+  <span class="p">];</span>
+
+  <span class="c1"># xfstests related</span>
+  users<span class="o">.</span>users<span class="o">.</span><span class="ss">paul =</span> <span class="p">{</span>
+    <span class="ss">isNormalUser  =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="ss">description  =</span> <span class="s2">&quot;Test user&quot;</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1"># This value determines the NixOS release from which the default</span>
+  <span class="c1"># settings for stateful data, like file locations and database versions</span>
+  <span class="c1"># on your system were taken. It‘s perfectly fine and recommended to leave</span>
+  <span class="c1"># this value at the release version of the first install of this system.</span>
+  <span class="c1"># Before changing this value read the documentation for this option</span>
+  <span class="c1"># (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).</span>
+  system<span class="o">.</span><span class="ss">stateVersion =</span> <span class="s2">&quot;22.11&quot;</span><span class="p">;</span> <span class="c1"># Did you read the comment?</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<h1 id="references">References</h1>
+<ul>
+<li><a href="https://www.google.com/">Download vm.nix</a></li>
+<li><a href="https://alberand.com/host-only-networking-set-up-for-qemu-hypervisor.html">QEMU network on Linux</a></li>
+<li><a href="https://github.com/alberand/nix-kernel-vm">My setup - nix-kernel-vm</a></li>
+<li><a href="https://wiki.archlinux.org/title/udev">UDEV rules</a></li>
+<li><a href="https://nixos.org/manual/nixpkgs/stable/#chap-pkgs-fetchers">NixOS fetchers (download sources from anywhere</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//nixos-linux-kernel-vm.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/nixos-linux-kernel-vm.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Linux Kernel VM in NixOS",
+      "description": "Development setup for Linux kernel on NixOS",
+      "datePublished": "2023-04-26 00:00:00+02:00",
+      "dateModified": "2023-04-26 00:00:00",
+      "keywords": "nixos, vm",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Setup Zephyr OS for STM32 Nucleo - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Setup Zephyr OS for STM32 Nucleo" />
+		<meta name="date" content="2020-02-15 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2020-02-15 00:00:00+01:00" />
+		<meta property="og:title" content="Setup Zephyr OS for STM32 Nucleo" />
+		<meta property="og:url" content="https://alberand.com/setup-zephyr-os-for-stm32-nucleo.html" />
+
+			<meta property="og:description" content="Setting up and running Zephyr RTOS for STM32 Nucleo" />
+			<meta name="description" content="Setting up and running Zephyr RTOS for STM32 Nucleo" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Setup Zephyr OS for STM32 Nucleo </h1>
+
+      <time id="title-date">
+          15.02.2020
+      </time>
+  </header>
+  <p>A few month ago I get a free STM32 Nucleo board from ST Microelectronics at
+Nuremberg's <a href="https://www.embedded-world.de/en">Embedded World</a>. I was thinking about buying one but didn't have any
+excuse to do it. As I got one I started to look on one of the real-time OS
+which catch my attention a long time ago - <a href="https://www.zephyrproject.org/">Zephyr OS</a>.</p>
+<p>After a first look it appeared to me as nicely design OS with rapidly growing
+number of features. The other thing which I noticed is that the list of
+supported boards is enormously big, it can come handy in the future. Moreover,
+it is under intense development by the Intel corporation which means that it
+won't die in a few years (I hope 😀).</p>
+<p>In this note I will describe process of setting up development environment
+for STM32 Nucleo (particularly for STM32L010RB) board with Zephyr OS. Later
+I would like to add testing setup too.</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#environment-setup">Environment setup</a></li>
+<li><a href="#zephyr-os-in-qemu-simulation">Zephyr OS in QEMU simulation</a></li>
+<li><a href="#compiling-and-running-hello-world-example">Compiling and running "Hello World" example</a></li>
+<li><a href="#creating-application-for-zephyr-os">Creating application for Zephyr OS</a><ul>
+<li><a href="#update-use-official-getting-started">Update - Use official getting started</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="environment-setup">Environment setup</h2>
+<p>Firstly, install dependencies:</p>
+<p>
+            <div  class="highlight"  id="code-b61b3829-6cb3-11f0-8664-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b3829-6cb3-11f0-8664-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>--no-install-recommends<span class="w"> </span>git<span class="w"> </span>cmake<span class="w"> </span>ninja-build<span class="w"> </span>gperf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>ccache<span class="w"> </span>dfu-util<span class="w"> </span>device-tree-compiler<span class="w"> </span>wget<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3-pip<span class="w"> </span>python3-setuptools<span class="w"> </span>python3-tk<span class="w"> </span>python3-wheel<span class="w"> </span>xz-utils<span class="w"> </span>file<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>make<span class="w"> </span>gcc<span class="w"> </span>gcc-multilib<span class="w"> </span>g++-multilib<span class="w"> </span>libsdl2-dev
+</code></pre></div>
+</p>
+<p class="note-right">
+<span class="note-sign">Note:</span> Commonly used notation for shell commands is <code>$</code> - commands executed
+by normal user and <code>#</code> commands executed as root
+</p>
+
+<p>Then, install Zephyr's <code>west</code> tool. It is basically Python utility to help you
+manage source codes and configuration of your repositories. To install it use
+<code>pip</code> (Python's package manager):</p>
+<p>
+            <div  class="highlight"  id="code-b61b4f21-6cb3-11f0-91dd-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b4f21-6cb3-11f0-91dd-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>west
+<span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export PATH=~/.local/bin:&quot;$PATH&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+<span class="gp">$ </span><span class="nb">source</span><span class="w"> </span>~/.bashrc
+</code></pre></div>
+</p>
+<p>Now we can get zephyr source code (it will take sometime ~ 300 Mb):</p>
+<p>
+            <div  class="highlight"  id="code-b61b5e34-6cb3-11f0-ad23-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b5e34-6cb3-11f0-ad23-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>west<span class="w"> </span>init<span class="w"> </span>stm-testbed
+</code></pre></div>
+</p>
+<p>Next update all submodules and install all the required python packages:</p>
+<p>
+            <div  class="highlight"  id="code-b61b6987-6cb3-11f0-a822-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b6987-6cb3-11f0-a822-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>stm-testbed
+<span class="gp">$ </span>west<span class="w"> </span>update
+<span class="gp">$ </span>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>-r<span class="w"> </span>zephyr/scripts/requirements.txt
+</code></pre></div>
+</p>
+<p>Lastly, we need to setup the zephyr-SDK (compilers and tools to build Zephyr).</p>
+<p>
+            <div  class="highlight"  id="code-b61b77b8-6cb3-11f0-9bc6-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b77b8-6cb3-11f0-9bc6-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>wget<span class="w"> </span>https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.11.1/zephyr-sdk-0.11.1-setup.run
+<span class="gp">$ </span>sh<span class="w"> </span>zephyr-sdk-0.10.0-setup.run
+</code></pre></div>
+</p>
+<p>The script will guide you through the installation process. The last thing to do
+is to define two environment variables which will be later used by the Zephyr's
+build system</p>
+<p>
+            <div  class="highlight"  id="code-b61b8401-6cb3-11f0-8d09-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b8401-6cb3-11f0-8d09-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEPHYR_TOOLCHAIN_VARIANT</span><span class="o">=</span>zephyr
+<span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">ZEPHYR_SDK_INSTALL_DIR</span><span class="o">=</span>&lt;sdk<span class="w"> </span>installation<span class="w"> </span>directory&gt;
+</code></pre></div>
+</p>
+<p>I also added them to my <code>~/.bashrc</code> to not export them every time. I forgot to
+do it a few times and spend too much time looking for such a simple problem.</p>
+<h2 id="zephyr-os-in-qemu-simulation">Zephyr OS in QEMU simulation</h2>
+<p>Zephyr is ready for compilation. The developers thought about further
+application development and testing so they added support of Qemu as default
+build target. Therefore, if you have <a href="https://www.qemu.org/">Qemu</a> installed you can immediately
+start to play with the system API.</p>
+<p>Firstly, before building an application, we need to configure environment for
+the Zephyr. Luckily, it is simple - just <code>source</code> the <code>zephyr-env.sh</code>
+script:</p>
+<p>
+            <div  class="highlight"  id="code-b61b91e9-6cb3-11f0-8730-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b91e9-6cb3-11f0-8730-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>stm-testbed/zephyr
+<span class="gp">$ </span><span class="nb">source</span><span class="w"> </span>zephyr-env.sh
+</code></pre></div>
+</p>
+<p>Next, let's run provided <code>hello_world</code> application. Go to the following
+directory and create <code>build</code> directory:</p>
+<p>
+            <div  class="highlight"  id="code-b61b9db8-6cb3-11f0-8884-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61b9db8-6cb3-11f0-8884-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>samples/hello_world/
+<span class="gp">$ </span>mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+</code></pre></div>
+</p>
+<p>Now we will use <code>cmake</code> to prepare application for build (create <code>cmake</code> cache
+file). As we want to run application in <code>Qemu</code> we need to tell <code>cmake</code> about it
+with defining variable <code>BOARD</code> (with -D flag):</p>
+<p>
+            <div  class="highlight"  id="code-b61bab37-6cb3-11f0-9d17-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bab37-6cb3-11f0-9d17-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>cmake<span class="w"> </span>-GNinja<span class="w"> </span>-DBOARD<span class="o">=</span>qemu_x86<span class="w"> </span>..
+</code></pre></div>
+</p>
+<p>The <code>-GNunja</code> arguments tells <code>cmake</code> that later we will build our application
+with <a href="https://ninja-build.org/">Ninja</a> building system. The last <code>..</code> is just path to the upper
+directory.  Then, build and run it with <code>ninja</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b61bb7c8-6cb3-11f0-bbf0-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bb7c8-6cb3-11f0-bbf0-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>ninja
+<span class="gp">$ </span>ninja<span class="w"> </span>run
+</code></pre></div>
+</p>
+<p>You should see something similar:</p>
+<p>
+            <div  class="highlight"  id="code-b61bc509-6cb3-11f0-89b3-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bc509-6cb3-11f0-89b3-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>SeaBIOS (version rel-1.12.0-0-ga698c8995f-prebuilt.qemu.org)
+Booting from ROM..***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+Hello World! qemu_x86
+</code></pre></div>
+</p>
+<p>The last line is our application. Hurray!</p>
+<p class="note-left">
+<span class="note-sign">Note: </span>To exit from Qemu press <code>CTRL + A</code> and then <code>X</code>
+</p>
+
+<h2 id="compiling-and-running-hello-world-example">Compiling and running "Hello World" example</h2>
+<p>Now let's try it on the real hardware. Clean the build directory and
+re-generate cmake cache for your STM32 board.</p>
+<p>
+            <div  class="highlight"  id="code-b61bcef2-6cb3-11f0-987c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bcef2-6cb3-11f0-987c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>ninja<span class="w"> </span>clean
+<span class="gp">$ </span>cmake<span class="w"> </span>-GNinja<span class="w"> </span>-DBOARD<span class="o">=</span>nucleo_l073rz<span class="w"> </span>..
+</code></pre></div>
+</p>
+<p>Connect your board to the PC and check that it appeard in the <code>/dev</code> directory
+(mine is <code>/dev/ttyACM0</code>). Compile and flash application to the board:</p>
+<p>
+            <div  class="highlight"  id="code-b61be035-6cb3-11f0-aff2-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61be035-6cb3-11f0-aff2-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>ninja
+<span class="gp">$ </span>ninja<span class="w"> </span>flash
+</code></pre></div>
+</p>
+<p>Run some serial monitor at <code>/dev/ttyACM0</code>, <code>115200 8N1</code> to check if firmware was
+correctly uploaded. I use <code>minicom</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b61bec5d-6cb3-11f0-8640-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bec5d-6cb3-11f0-8640-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>minicom<span class="w"> </span>-s
+</code></pre></div>
+</p>
+<p>Press reset button on the DevKit and you should see similar message:</p>
+<p>
+            <div  class="highlight"  id="code-b61bf9b9-6cb3-11f0-87c9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61bf9b9-6cb3-11f0-87c9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>***** Booting Zephyr OS zephyr-v1.14.0-783-g021e27cfed46 *****
+Hello World! nucleo_l073rz
+</code></pre></div>
+</p>
+<h2 id="creating-application-for-zephyr-os">Creating application for Zephyr OS</h2>
+<p>In Zephyr world the build system is application-centric. That means that your
+application is entry point in the build process. That, in turn, means that you
+can control the way Zephyr OS is build from your application building process.</p>
+<p>Zephyr is installed separately somewhere in the system. So, you use it as a
+library. I suppose that they choose this way to simplify the process of
+configuration management and building of the kernel.</p>
+<p>As an examples let's create simple application based on blinky example. First of
+all create working directory and <code>cmake</code>'s project file:</p>
+<p>
+            <div  class="highlight"  id="code-b61c039c-6cb3-11f0-8f30-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61c039c-6cb3-11f0-8f30-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gp">$ </span>mkdir<span class="w"> </span>app<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>app
+<span class="gp">$ </span>mkdir<span class="w"> </span>src
+<span class="gp">$ </span>touch<span class="w"> </span>CMakeLists.txt
+</code></pre></div>
+</p>
+<p>Put the following configuration into the <code>CMakeList.txt</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b61c2b3a-6cb3-11f0-8fdd-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61c2b3a-6cb3-11f0-8fdd-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c"># Boilerplate code, which pulls in the Zephyr build system.</span>
+<span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span><span class="w"> </span><span class="s">3.13.1</span><span class="p">)</span>
+<span class="nb">include</span><span class="p">(</span><span class="o">$ENV{</span><span class="nv">ZEPHYR_BASE</span><span class="o">}</span><span class="s">/cmake/app/boilerplate.cmake</span><span class="w"> </span><span class="s">NO_POLICY_SCOPE</span><span class="p">)</span>
+<span class="nb">project</span><span class="p">(</span><span class="s">my_zephyr_app</span><span class="p">)</span>
+
+<span class="c"># Add your source file to the &quot;app&quot; target. This must come after</span>
+<span class="c"># the boilerplate code, which defines the target.</span>
+<span class="nb">target_sources</span><span class="p">(</span><span class="s">app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">src/main.c</span><span class="p">)</span>
+</code></pre></div>
+</p>
+<p>Then copy source code of provided blinky example. Go back to the <code>zephyr</code>
+folder and then take <code>samples/basic/blinky/src/main.c</code> and copy <code>main.c</code>.</p>
+<p>Now connect your board and run <code>ninja flash</code>. It should compile and upload
+application, built-in LED will start blinking.</p>
+<p>
+<figure class="article-figure"><img alt="Zephyr RTOS blinky app" src="images/stm32-zephyr.gif"></figure>
+</p>
+<p>As you can see it is quite convenient to manage your application as it is
+completely separate from source code of the OS.</p>
+<h4 id="update-use-official-getting-started">Update - Use official getting started</h4>
+<p>In the time when I started writing this article the official getting started was
+a little bit hard to follow. However, now it is so concise and simple that I
+would recommend to follow official <a href="https://docs.zephyrproject.org/latest/getting_started/index.html">documentation</a>.</p>
+<h4 id="references">References</h4>
+<ul>
+<li><a href="https://www.zephyrproject.org/">Zephyr RTOS</a></li>
+<li><a href="https://www.st.com/en/evaluation-tools/nucleo-l010rb.html">STM32 Nucleo (STM32L010RB)</a></li>
+<li><a href="https://www.qemu.org/">QEMU - processor emulator</a></li>
+<li><a href="https://ninja-build.org/">Ninja Build System</a></li>
+<li><a href="https://www.embedded-world.de/en">Embedded World - Nuremberg, Germany</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//setup_zephyr_for_stm32.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/setup-zephyr-os-for-stm32-nucleo.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Setup Zephyr OS for STM32 Nucleo",
+      "description": "Setting up and running Zephyr RTOS for STM32 Nucleo",
+      "datePublished": "2020-02-15 00:00:00+01:00",
+      "dateModified": "2020-01-03 00:00:00",
+      "keywords": "stm32, zephyr, tutorial, os, rtos",
+      "image": "https://alberand.com/images/zephyr-logo.jpg",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

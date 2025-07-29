@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+NixOS Wireguard VPN setup - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="NixOS Wireguard VPN setup" />
+		<meta name="date" content="2023-12-11 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2023-12-11 00:00:00+01:00" />
+		<meta property="og:title" content="NixOS Wireguard VPN setup" />
+		<meta property="og:url" content="https://alberand.com/nixos-wireguard-vpn.html" />
+
+			<meta property="og:description" content="Let's configure wireguard VPN on NixOS with a kill-switch" />
+			<meta name="description" content="Let's configure wireguard VPN on NixOS with a kill-switch" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> NixOS Wireguard VPN setup </h1>
+
+      <time id="title-date">
+          11.12.2023
+      </time>
+  </header>
+  <p>Recently I finally decided to configure VPN for my main machine. My choice fell
+on Mullvad VPN. They are amazing, they don't even need your email for an account.</p>
+<p>This guide is for configuring Wireguard tunnel using Mullvad VPN servers, but
+you can apply this configuration to any Wireguard VPN.</p>
+<p>The <a href="https://nixos.wiki/wiki/WireGuard">NixOS wiki</a> provides a starting ground for running Wireguard tunnel. The
+wiki has multiple example with <code>networking.wireguard</code>, <code>networking.wg-quick</code> and
+<code>systemd-networkd</code> for both server and client. Moreover you can find
+<a href="https://search.nixos.org/packages?show=mullvad-vpn&amp;type=packages&amp;query=mullvad">mullvad-vpn app</a> and configure VPN through the clean GUI, but it will not be
+declarative (not in your <code>configuration.nix</code>).</p>
+<p>I <strong>recommend</strong> going with <code>networking.wg-quick</code> as it's probably the easiest one.</p>
+<p>First of all, let's create a separate file, so it won't be a problem in the
+future to use this module on another machine.</p>
+<p>
+            <div  class="highlight"  id="code-b6401b51-6cb3-11f0-8a5b-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6401b51-6cb3-11f0-8a5b-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># modules/wireguard.nix</span>
+<span class="p">{</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>Don't forget to add this file to the <code>imports</code> list in the <code>configuration.nix</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b6402833-6cb3-11f0-aeea-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6402833-6cb3-11f0-aeea-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> config<span class="p">,</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span>
+  <span class="ss">imports =</span> <span class="p">[</span>
+    <span class="o">.</span><span class="l">/hardware-configuration.nix</span>
+    <span class="o">.</span><span class="l">/modules/wireguard.nix</span>
+  <span class="p">];</span>
+  <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>In that file copy-paste the same configuration suggested in wiki's "Client"
+section:</p>
+<p>
+            <div  class="highlight"  id="code-b64036d1-6cb3-11f0-8aad-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b64036d1-6cb3-11f0-8aad-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span>
+  networking<span class="o">.</span>wg-quick<span class="o">.</span><span class="ss">interfaces =</span> <span class="k">let</span>
+    <span class="ss">server_ip =</span> <span class="s2">&quot;18.19.23.66&quot;</span><span class="p">;</span>
+  <span class="k">in</span> <span class="p">{</span>
+    <span class="ss">wg0 =</span> <span class="p">{</span>
+      <span class="c1"># IP address of this machine in the *tunnel network*</span>
+      <span class="ss">address =</span> <span class="p">[</span>
+        <span class="s2">&quot;10.64.186.60/32&quot;</span>
+        <span class="s2">&quot;fdc9:281f:04d7:9ee9::2/64&quot;</span>
+      <span class="p">];</span>
+
+      <span class="c1"># To match firewall allowedUDPPorts (without this wg</span>
+      <span class="c1"># uses random port numbers).</span>
+      <span class="ss">listenPort =</span> <span class="mi">51820</span><span class="p">;</span>
+
+      <span class="c1"># Path to the private key file.</span>
+      <span class="ss">privateKeyFile =</span> <span class="s2">&quot;/etc/mullvad-vpn.key&quot;</span><span class="p">;</span>
+
+      <span class="ss">peers =</span> <span class="p">[{</span>
+        <span class="ss">publicKey =</span> <span class="s2">&quot;1493vtFUbIfSpQKRBki/1d0YgWIQwMV4AQAvGxjCNVM=&quot;</span><span class="p">;</span>
+        <span class="ss">allowedIPs =</span> <span class="p">[</span> <span class="s2">&quot;0.0.0.0/0&quot;</span> <span class="p">];</span>
+        <span class="ss">endpoint =</span> <span class="s2">&quot;</span><span class="si">${</span>server_ip<span class="si">}</span><span class="s2">:51820&quot;</span><span class="p">;</span>
+        <span class="ss">persistentKeepalive =</span> <span class="mi">25</span><span class="p">;</span>
+      <span class="p">}];</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>On Mullvad website go to "WireGuard configuration" in the left sidebar. Pick
+country, server, port and any content blockers you wish, enable killswitch
+checkbox. Download <code>*.conf</code> file, mine is <code>dk-cph-wg-401.conf</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b6406e2c-6cb3-11f0-adc3-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6406e2c-6cb3-11f0-adc3-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="k">[Interface]</span>
+<span class="c1"># Device: Fast Basset</span>
+<span class="na">PrivateKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">SL/xaxaFRogeNoDOOontGolvdIJ5x8mgLw0U/+1McG4=</span>
+<span class="na">Address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10.75.130.74/32,fc00:bbbb:bbbb:bb01::4:be49/128</span>
+<span class="na">DNS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100.64.0.3</span>
+<span class="na">PostUp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">iptables -I OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT &amp;&amp; ip6tables -I OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT</span>
+<span class="na">PreDown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">iptables -D OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT &amp;&amp; ip6tables -D OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT</span>
+
+<span class="k">[Peer]</span>
+<span class="na">PublicKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">Jjml2TSqKlgzW6UzPiJszaun743QYpyl5jQk8UOQYg0=</span>
+<span class="na">AllowedIPs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0.0.0/0,::0/0</span>
+<span class="na">Endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">146.70.197.194:51820</span>
+</code></pre></div>
+</p>
+<h1 id="private-vpn-configuration-files">Private VPN configuration files</h1>
+<p>We can not put Mullvad VPN configuration file to the Nix configuration directly.
+The <code>dk-cph-wg-401.conf</code> contains private key which should not be shared.
+<code>/nix/store</code> is world readable, by putting this file in the <code>*.nix</code> any system
+user would be able to read your private key.</p>
+<p>Let's put private key to the <code>/etc/mullvad-vpn.key</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b6407fcf-6cb3-11f0-8dbb-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6407fcf-6cb3-11f0-8dbb-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>cat<span class="w"> </span>dk-cph-wg-401.conf<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;PrivateKey&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{ print $3 }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/mullvad-vpn.key
+</code></pre></div>
+</p>
+<p>Let's make it readable only by the owner (root):</p>
+<p>
+            <div  class="highlight"  id="code-b6408e7d-6cb3-11f0-8a11-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6408e7d-6cb3-11f0-8a11-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">400</span><span class="w"> </span>/etc/mullvad-vpn.key
+</code></pre></div>
+</p>
+<h1 id="copy-configuration-from-dk-cph-wg-401conf-to-moduleswireguardnix">Copy configuration from <code>dk-cph-wg-401.conf</code> to <code>modules/wireguard.nix</code></h1>
+<p>Now you need to copy values from Mullvad config to Nix configuration. Each
+parameter has a comment above it describing corresponding item in Mullvad's
+<code>dk-cph-wg-401.conf</code> file.</p>
+<p>
+            <div  class="highlight"  id="code-b6409b5a-6cb3-11f0-ab7a-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6409b5a-6cb3-11f0-ab7a-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span>
+  networking<span class="o">.</span>wg-quick<span class="o">.</span><span class="ss">interfaces =</span> <span class="k">let</span>
+    <span class="c1"># [Peer] section -&gt; Endpoint</span>
+    <span class="ss">server_ip =</span> <span class="s2">&quot;18.19.23.66&quot;</span><span class="p">;</span>
+  <span class="k">in</span> <span class="p">{</span>
+    <span class="ss">wg0 =</span> <span class="p">{</span>
+      <span class="c1"># [Interface] section -&gt; Address</span>
+      <span class="ss">ips =</span> <span class="p">[</span> <span class="s2">&quot;10.75.130.74/32&quot;</span> <span class="p">];</span>
+
+      <span class="c1"># [Peer] section -&gt; Endpoint:port</span>
+      <span class="ss">listenPort =</span> <span class="mi">51820</span><span class="p">;</span>
+
+      <span class="c1"># Path to the private key file.</span>
+      <span class="ss">privateKeyFile =</span> <span class="s2">&quot;/etc/mullvad-vpn.key&quot;</span><span class="p">;</span>
+
+      <span class="ss">peers =</span> <span class="p">[{</span>
+        <span class="c1"># [Peer] section -&gt; PublicKey</span>
+        <span class="ss">publicKey =</span> <span class="s2">&quot;1493vtFUbIfSpQKRBki/1d0YgWIQwMV4AQAvGxjCNVM=&quot;</span><span class="p">;</span>
+        <span class="c1"># [Peer] section -&gt; AllowedIPs</span>
+        <span class="ss">allowedIPs =</span> <span class="p">[</span> <span class="s2">&quot;0.0.0.0/0&quot;</span> <span class="p">];</span>
+        <span class="c1"># [Peer] section -&gt; Endpoint:port</span>
+        <span class="ss">endpoint =</span> <span class="s2">&quot;</span><span class="si">${</span>server_ip<span class="si">}</span><span class="s2">:51820&quot;</span><span class="p">;</span>
+        <span class="ss">persistentKeepalive =</span> <span class="mi">25</span><span class="p">;</span>
+      <span class="p">}];</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>Now, open Wireguard port, if your are using firewall:</p>
+<p>
+            <div  class="highlight"  id="code-b640bc68-6cb3-11f0-aaa1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b640bc68-6cb3-11f0-aaa1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>networking<span class="o">.</span><span class="ss">firewall =</span> <span class="p">{</span>
+  <span class="ss">allowedUDPPorts =</span> <span class="p">[</span>config<span class="o">.</span>networking<span class="o">.</span>wg-quick<span class="o">.</span>interfaces<span class="o">.</span>wg0<span class="o">.</span>listenPort<span class="p">];</span>
+<span class="p">};</span>
+</code></pre></div>
+</p>
+<p>Done! That's enough to have a VPN tunnel. But, to be on a safe side you need a
+killswitch. The killswitch is a network filter which allows traffic to go only
+through VPN, without VPN all the trafic is blocked. So, when VPN tunnel suddenly
+goes down you won't expose your real IP address.</p>
+<h1 id="killswitch-all-traffic-through-vpn">Killswitch! All traffic through VPN</h1>
+<p>If you enabled killswitch checkbox on Mullvad's configuration page, then, your
+*.conf file will have <code>PostUp</code> and <code>PreDown</code> fields. These are shell commands
+run before and after VPN is started/stopped.</p>
+<p>
+            <div  class="highlight"  id="code-b640caf2-6cb3-11f0-a895-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b640caf2-6cb3-11f0-a895-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="na">PostUp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">iptables -I OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT &amp;&amp; ip6tables -I OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT</span>
+<span class="na">PreDown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">iptables -D OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT &amp;&amp; ip6tables -D OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT</span>
+</code></pre></div>
+</p>
+<p>In my config, Wireguard runs <code>iptables</code> to tell network stack that any packet
+which does not go through <strong>wg0</strong> interface should be REJECTed. <code>iptables</code> is
+utility used to create network filters. Now copy those rules to the <code>postUp</code> and
+<code>postDown</code> parametrs in <code>modules/wireguard.nix</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b640d929-6cb3-11f0-9911-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b640d929-6cb3-11f0-9911-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="ss">postUp =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">  # Mark packets on the wg0 interface</span>
+<span class="s1">  wg set wg0 fwmark 51820</span>
+
+<span class="s1">  # Forbid anything else which doesn&#39;t go through wireguard VPN on</span>
+<span class="s1">  # ipV4 and ipV6</span>
+<span class="s1">  </span><span class="si">${</span>pkgs<span class="o">.</span>iptables<span class="si">}</span><span class="s1">/bin/iptables -A OUTPUT \</span>
+<span class="s1">    ! -d 192.168.0.0/16 \</span>
+<span class="s1">    ! -o wg0 \</span>
+<span class="s1">    -m mark ! --mark $(wg show wg0 fwmark) \</span>
+<span class="s1">    -m addrtype ! --dst-type LOCAL \</span>
+<span class="s1">    -j REJECT</span>
+<span class="s1">  </span><span class="si">${</span>pkgs<span class="o">.</span>iptables<span class="si">}</span><span class="s1">/bin/ip6tables -A OUTPUT \</span>
+<span class="s1">    ! -o wg0 \</span>
+<span class="s1">    -m mark ! --mark $(wg show wg0 fwmark) \</span>
+<span class="s1">    -m addrtype ! --dst-type LOCAL \</span>
+<span class="s1">    -j REJECT</span>
+<span class="s1">&#39;&#39;</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<p>Note that Nix configuration has a few differences:</p>
+<ul>
+<li>a full path to any utility <code>${pkgs.iptables}/bin/iptables</code> instead of just
+  <code>iptables</code>.</li>
+<li>to mark all network packets going through wg0 interface <code>wg set wg0 fwmark
+  51820</code> command is needed. This is probably necessary to not create a closed
+  loop in the filter.</li>
+<li>Wireguard interface is directly specified as <code>wg0</code>. Nix module does not
+  currently pass any parameters to those commands, general <code>%i</code> replacement can
+  not be used</li>
+</ul>
+<p>Same for <code>PreDown</code> -&gt; <code>postDown</code> conversion:</p>
+<p>
+            <div  class="highlight"  id="code-b640e96e-6cb3-11f0-b1ff-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b640e96e-6cb3-11f0-b1ff-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="ss">postDown =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">  </span><span class="si">${</span>pkgs<span class="o">.</span>iptables<span class="si">}</span><span class="s1">/bin/iptables -D OUTPUT \</span>
+<span class="s1">    ! -o wg0 \</span>
+<span class="s1">    -m mark ! --mark $(wg show wg0 fwmark) \</span>
+<span class="s1">    -m addrtype ! --dst-type LOCAL \</span>
+<span class="s1">    -j REJECT</span>
+<span class="s1">  </span><span class="si">${</span>pkgs<span class="o">.</span>iptables<span class="si">}</span><span class="s1">/bin/ip6tables -D OUTPUT \</span>
+<span class="s1">    ! -o wg0 -m mark \</span>
+<span class="s1">    ! --mark $(wg show wg0 fwmark) \</span>
+<span class="s1">    -m addrtype ! --dst-type LOCAL \</span>
+<span class="s1">    -j REJECT</span>
+<span class="s1">&#39;&#39;</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<h1 id="exclude-trafficportip-from-vpn">Exclude traffic/port/IP from VPN</h1>
+<p>Local network application don't need VPN. We can exclude particular IP
+addresses or ports. For example to exclude <code>kdeconnect</code> ports (range 1714-1764
+for UDP and TCP) from VPN add the following <code>iptables</code> rules into <code>postUp</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b640f756-6cb3-11f0-bd40-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b640f756-6cb3-11f0-bd40-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># Accept kdeconnect connections</span>
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-A<span class="w"> </span>INPUT<span class="w"> </span>-i<span class="w"> </span>wg0<span class="w"> </span>-p<span class="w"> </span>udp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dport<span class="w"> </span><span class="m">1714</span>:1764<span class="w"> </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-A<span class="w"> </span>INPUT<span class="w"> </span>-i<span class="w"> </span>wg0<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dport<span class="w"> </span><span class="m">1714</span>:1764<span class="w"> </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-A<span class="w"> </span>OUTPUT<span class="w"> </span>-o<span class="w"> </span>wg0<span class="w"> </span>-p<span class="w"> </span>udp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sport<span class="w"> </span><span class="m">1714</span>:1764<span class="w"> </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-A<span class="w"> </span>OUTPUT<span class="w"> </span>-o<span class="w"> </span>wg0<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sport<span class="w"> </span><span class="m">1714</span>:1764<span class="w"> </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+</code></pre></div>
+</p>
+<p>To exclude local port (in this case Deluge web client is running in container on
+port 8112):</p>
+<p>
+            <div  class="highlight"  id="code-b6411bcd-6cb3-11f0-91d7-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6411bcd-6cb3-11f0-91d7-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># Allow deluge web gui</span>
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-I<span class="w"> </span>OUTPUT<span class="w"> </span>-o<span class="w"> </span>lo<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dport<span class="w"> </span><span class="m">8112</span><span class="w"> </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+</code></pre></div>
+</p>
+<p>Another example is to exclude subnet for Nix containers (container has IP of
+10.233.1.2 and host 10.233.1.1):</p>
+<p>
+            <div  class="highlight"  id="code-b6412ce1-6cb3-11f0-930e-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6412ce1-6cb3-11f0-930e-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-I<span class="w"> </span>OUTPUT<span class="w"> </span>-s<span class="w"> </span><span class="m">10</span>.233.1.0/24<span class="w"> </span>-d<span class="w"> </span><span class="m">10</span>.233.1.0/24<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-j<span class="w"> </span>ACCEPT
+</code></pre></div>
+</p>
+<h1 id="split-tunnel">Split Tunnel</h1>
+<p>Ok, but what if I want to route some traffic through the Wireguard and other
+traffic through other tunnel. For example, I have a company VPN which is needed
+for work. There is a way.</p>
+<p>In this section I will describe how to add OpenVPN tunnel in addition to setup
+above. With the tunnel my machine would be connected to another subnet without
+going through Wireguard tunnel.</p>
+<p><strong>First of all</strong>, killswitch/iptables needs to know that traffic going to
+OpenVPN subnet should not be rejected. To accept new connection add these rules:</p>
+<p>
+            <div  class="highlight"  id="code-b6413c71-6cb3-11f0-af77-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6413c71-6cb3-11f0-af77-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-A<span class="w"> </span>INPUT<span class="w"> </span>-s<span class="w"> </span><span class="m">19</span>.29.79.10<span class="w"> </span>-d<span class="w"> </span><span class="m">192</span>.168.0.100<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+<span class="si">${</span><span class="nv">pkgs</span><span class="p">.iptables</span><span class="si">}</span>/bin/iptables<span class="w"> </span>-I<span class="w"> </span>OUTPUT<span class="w"> </span>-s<span class="w"> </span><span class="m">192</span>.168.0.100<span class="w"> </span>-d<span class="w"> </span><span class="m">19</span>.29.79.10<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-m<span class="w"> </span>state<span class="w"> </span>--state<span class="w"> </span>NEW,ESTABLISHED<span class="w"> </span>-j<span class="w"> </span>ACCEPT
+</code></pre></div>
+</p>
+<p>Where:</p>
+<ul>
+<li><code>19.29.79.10</code> is IP of OpenVPN endpoint/server</li>
+<li><code>192.168.0.100</code> is IP of this machine</li>
+</ul>
+<p>Note that I explicitly specified source <code>-s</code> and <code>-d</code> destination IPs instead of
+subnets. In my case I want node to node connection. For subnets IP mask need to
+be used <code>/32</code>.</p>
+<p><strong>Next</strong>, obtain your OpenVPN configuration file <code>*.ovpn</code>. This file is also
+<strong>secret</strong> and can not be shared, so, don't put it into Nix configuration. Copy
+it somewhere in your system.</p>
+<p>I copied mine into <code>/etc/openvpn/jellyfin-tunnel.ovpn</code>. Also, as system already
+has VPN, OpenVPN needs to know that it should not route all the traffic through
+itself. Usually it does it with a network route. To tell OpenVPN not to create a
+global route add following line to your <code>*.ovpn</code> config:</p>
+<p>
+            <div  class="highlight"  id="code-b6415554-6cb3-11f0-af86-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6415554-6cb3-11f0-af86-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>pull-filter ignore redirect-gateway
+</code></pre></div>
+</p>
+<p>That's all for preparations phase, now let's create the tunnel in the system:</p>
+<p>
+            <div  class="highlight"  id="code-b6416084-6cb3-11f0-87a3-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6416084-6cb3-11f0-87a3-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># MANUAL ACTIONS ARE REQUIRED!</span>
+<span class="c1"># - Copy your VPN configuration to /etc/openvpn/jellyfin-tunnel.ovpn</span>
+<span class="c1"># - Add following line to /etc/openvpn/jellyfin-tunnel.ovpn</span>
+<span class="c1">#</span>
+<span class="c1">#     pull-filter ignore redirect-gateway</span>
+<span class="c1">#</span>
+<span class="c1">#   This means that OpenVPN won&#39;t create route which routes all the</span>
+<span class="c1">#   traffic through OpenVPN tunnel.</span>
+<span class="p">{</span> config<span class="p">,</span> pkgs<span class="p">,</span> lib<span class="p">,</span> <span class="o">...</span><span class="p">}:</span> <span class="p">{</span>
+  networking<span class="o">.</span>dhcpcd<span class="o">.</span><span class="ss">runHook =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">    </span><span class="si">${</span>pkgs<span class="o">.</span>iproute2<span class="si">}</span><span class="s1">/bin/ip route add 19.29.79.10 via 192.168.0.1 dev enp34s0</span>
+<span class="s1">  &#39;&#39;</span><span class="p">;</span>
+
+  users<span class="o">.</span><span class="ss">users =</span> <span class="p">{</span>
+    <span class="ss">openvpn =</span> <span class="p">{</span>
+      <span class="ss">name =</span> <span class="s2">&quot;openvpn&quot;</span><span class="p">;</span>
+      <span class="ss">group =</span> <span class="s2">&quot;openvpn&quot;</span><span class="p">;</span>
+      <span class="ss">isNormalUser =</span> <span class="no">true</span><span class="p">;</span>
+      <span class="ss">uid =</span> <span class="mi">1100</span><span class="p">;</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+
+  users<span class="o">.</span>groups<span class="o">.</span><span class="ss">openvpn =</span> <span class="p">{</span>
+    <span class="ss">name =</span> <span class="s2">&quot;openvpn&quot;</span><span class="p">;</span>
+    <span class="ss">members =</span> <span class="p">[</span><span class="s2">&quot;openvpn&quot;</span><span class="p">];</span>
+    <span class="ss">gid =</span> <span class="mi">1100</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1"># Configure our OpenVPN client</span>
+  services<span class="o">.</span>openvpn<span class="o">.</span><span class="ss">servers =</span> <span class="p">{</span>
+    <span class="ss">jellyfin =</span> <span class="p">{</span>
+      <span class="ss">config =</span> <span class="s1">&#39;&#39;config /etc/openvpn/jellyfin-tunnel.ovpn&#39;&#39;</span><span class="p">;</span>
+      <span class="ss">autoStart =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>Here, new network route is created to route all the traffic addressed to OpenVPN
+endpoint <code>19.29.79.10</code> through LAN gateway <code>192.168.0.1</code> (e.g. WiFi router).
+This is needed as without the route OpenVPN client will try to reach endpoint
+through Wireguard tunnel, which won't work (not sure why).</p>
+<p>Then, new <code>openvpn</code> user and group are created with specific UID/GID. Specific
+UID/GID could be anything or you can even left it out. I like to specify user ID
+as then it's convenient in places where ID instead of name is used.</p>
+<p>Finally, config declares OpenVPN connection with name <code>openvpn-jellyfin</code>. This
+name is used as a systemd's service name. You can check status of your VPN
+tunnel with:</p>
+<p>
+            <div  class="highlight"  id="code-b6418048-6cb3-11f0-9cd2-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6418048-6cb3-11f0-9cd2-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>openvpn-jellyfin
+</code></pre></div>
+</p>
+<p>Enabling/Disabling <code>autoStart</code> is straightforward. Otherwise, you can start your
+tunnel with systemd:</p>
+<p>
+            <div  class="highlight"  id="code-b6418c5b-6cb3-11f0-bb35-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6418c5b-6cb3-11f0-bb35-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>openvpn-jellyfin
+</code></pre></div>
+</p>
+<h1 id="i-want-to-use-networkingwireguard">I want to use <code>networking.wireguard</code></h1>
+<p>This was my initial approach and there's two additional things to handle:</p>
+<h2 id="additional-ip-route">Additional IP route</h2>
+<p>As configuration specifies <code>allowedIPs = 0.0.0.0/0</code> all connection on <code>wg0</code>
+interface will be routed through VPN tunnel. This creates a routing issue as
+Wireguard needs to connect to endpoint via public network.</p>
+<p>To do so, create a new route to tell network stack to route traffic going to
+endpoint IP (18.19.23..) through main gateway (192.168.0.1 is my WiFi router):</p>
+<p>
+            <div  class="highlight"  id="code-b6419950-6cb3-11f0-9487-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6419950-6cb3-11f0-9487-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>networking<span class="o">.</span>dhcpcd<span class="o">.</span><span class="ss">runHook =</span> <span class="s1">&#39;&#39;</span>
+<span class="s1">  </span><span class="si">${</span>pkgs<span class="o">.</span>iproute2<span class="si">}</span><span class="s1">/bin/ip route add 18.19.23.66/32 via 192.168.0.1 dev enp34s0</span>
+<span class="s1">&#39;&#39;</span><span class="p">;</span>
+</code></pre></div>
+</p>
+<p>You can create the route with <code>networking.interfaces</code> but it will not work just
+like that! The route will be flushed on suspend.</p>
+<p>
+            <div  class="highlight"  id="code-b641a804-6cb3-11f0-8b9d-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b641a804-6cb3-11f0-8b9d-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>networking<span class="o">.</span>interfaces<span class="o">.</span>enp34s0<span class="o">.</span>ipv4<span class="o">.</span><span class="ss">routes =</span> <span class="p">[{</span>
+    <span class="ss">address =</span> <span class="s2">&quot;18.19.23.66&quot;</span><span class="p">;</span>
+    <span class="ss">prefixLength =</span> <span class="mi">32</span><span class="p">;</span>
+    <span class="ss">via =</span> <span class="s2">&quot;192.168.0.1&quot;</span><span class="p">;</span>
+<span class="p">}];</span>
+</code></pre></div>
+</p>
+<h2 id="wireguard-vpn-doesnt-work-after-suspendsleep">Wireguard VPN doesn't work after suspend/sleep</h2>
+<p>Unfortunately, <code>dhcpcd</code> will not re-create an additional route created via
+<code>networking.interfaces</code>. There is similar problem described at <a href="https://wiki.archlinux.org/title/WireGuard#Connection_lost_after_sleep_using_systemd-networkd">Arch Wiki</a>,
+but I don't use <code>systemd-networkd</code> so the solution suggested doesn't apply.</p>
+<p>As <code>dhcpcd</code> will remove all routes on wake-up, Wireguard will fail to connect to
+the endpoint. On my system <code>dhcpcd.service</code> creates all necessary IP routes. But
+the one necessary for Wireguard is created by
+<code>network-addresses-enp34s0.service</code>. This service doesn't restart after suspend.</p>
+<p>Note that by using <code>networking.dhcpcd.runHook</code> this problem is solved as route
+is created by <code>dhcpcd</code> itself.</p>
+<p>To make it work without <code>dhcpcd</code> hook, I decided to go with easy fix by
+restarting the VPN service after network is established. To do so:</p>
+<ul>
+<li>add a services for restarting address obtaining for network interface,</li>
+<li>then make it sleep a little (waiting for dhcpcd set things up),</li>
+<li>and make Wireguard service dependable on this all.</li>
+</ul>
+<p>See <a href="/materials/nixos-wireguard-vpn-snippet.nix">this code snippet</a> for doing this in code.</p>
+<p>The <code>suspend-restart</code> also creates route as described in <a href="#additional-ip-route">Additional IP
+route</a>. This is not a nice way to solve it but I didn't
+want to continue with this solution as I switched to <code>wg-quick</code> which doesn't
+need all of this. This is probably the same problem as described in Arch Wiki,
+so, if you know how to fix it send me a message, I will update the article.</p>
+<h1 id="references">References</h1>
+<ul>
+<li><a href="https://nixos.wiki/wiki/WireGuard">NixOS Wiki Wireguard</a></li>
+<li><a href="https://search.nixos.org/packages?show=mullvad-vpn&amp;type=packages&amp;query=mullvad">Mullvad-vpn application in Nix repo</a></li>
+<li><a href="https://www.procustodibus.com/blog/2021/03/wireguard-allowedips-calculator/">Wireguard AllowIPs Calculator</a></li>
+<li><a href="https://wiki.archlinux.org/title/WireGuard#Connection_lost_after_sleep_using_systemd-networkd">Arch Wiki - Connection lost after sleep</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//nixos-wireguard-vpn.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/nixos-wireguard-vpn.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "NixOS Wireguard VPN setup",
+      "description": "Let's configure wireguard VPN on NixOS with a kill-switch",
+      "datePublished": "2023-12-11 00:00:00+01:00",
+      "dateModified": "2023-12-11 00:00:00",
+      "keywords": "pelican, publishing",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

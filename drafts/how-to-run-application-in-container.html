@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+How to run an application in container on NixOS - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="How to run an application in container on NixOS" />
+		<meta name="date" content="2025-06-18 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2025-06-18 00:00:00+02:00" />
+		<meta property="og:title" content="How to run an application in container on NixOS" />
+		<meta property="og:url" content="https://alberand.com/drafts/how-to-run-application-in-container.html" />
+
+			<meta property="og:description" content="Containers are an easy way to secure and isolate application running on" />
+			<meta name="description" content="Containers are an easy way to secure and isolate application running on" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> How to run an application in container on NixOS </h1>
+
+      <time id="title-date">
+          18.06.2025
+      </time>
+  </header>
+  <p>your server.
+Lang: en</p>
+<p>Containers are an easy way to secure and isolate application running on
+your server. I put most of apps running on my server into containers. Even
+though most of those apps are behind VPN, some of them are exposed to wider
+internet. Any vulnerability in these could lead to access to my private network.</p>
+<p>On NixOS, there's two big options how to run application in containers:</p>
+<ul>
+<li><em>The classic</em> OCI containers such as Podman/Docker</li>
+<li><em>systemd-nspawn</em> - systemd containers created mainly for development purposes
+  in mind</li>
+</ul>
+<p>Why to use systemd-nspawn then? There's two things.</p>
+<p>The host shares /nix/store with the <code>nspawn</code> container, this means that spinning
+up the container doesn't require any image. The guest is also NixOS.</p>
+<p>Secondly, as guest is NixOS we can easily declare guest system with Nix. We can
+use all the packages, services, and options provided by NixOS. This is hugely
+simplifies the process of creating containers.</p>
+<h1 id="security">Security</h1>
+<p>According to [main maintainer of systemd][1] <code>systemd-nspawn</code> was created for
+development purposes and should not be used for deployments. Although this is
+true, <code>nspawn</code> is still pretty secure and is sooo convenient on NixOS.</p>
+<p>These containers are <em>privileged</em> by default (root inside is root outside).</p>
+<p>TODO describe user isolation, capabilities, unprivileged mode</p>
+<p>Unprivileged mode is not possible in the default NixOS configuration as systemd
+doesn't support <code>--directory</code> argument in unprivileged mode. We will need to
+create an image or tarball to use it with <code>--image</code>. Like described [here][2].</p>
+<p>Summing up, I think systemd-nspawn is good enough for running services for your
+homelab, especially if they are not exposed to wider internet. With precaution
+such as running services under non-root users inside the container, dropping all
+the possible capabilities, and isolating network interfaces I don't see any high
+risk threats.</p>
+<h1 id="container">Container</h1>
+<p>In this post I will show how to host [Forgejo][5] instance. Initial setup is
+pretty simple, somewhere in your <code>configuration.nix</code> add the following:</p>
+<p>
+            <div  class="highlight"  id="code-b6176ba4-6cb3-11f0-89db-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6176ba4-6cb3-11f0-89db-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>  containers<span class="o">.</span><span class="ss">forgejo =</span> <span class="p">{</span>
+    <span class="ss">autoStart =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="ss">ephemeral =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="ss">config =</span> <span class="p">{</span>
+      config<span class="p">,</span>
+      pkgs<span class="p">,</span>
+      lib<span class="p">,</span>
+      <span class="o">...</span>
+    <span class="p">}:</span> <span class="p">{</span>
+      environment<span class="o">.</span><span class="ss">systemPackages =</span> <span class="p">[</span>
+        busybox
+        vim
+      <span class="p">];</span>
+
+      system<span class="o">.</span><span class="ss">stateVersion =</span> <span class="s2">&quot;25.05&quot;</span><span class="p">;</span>
+
+      <span class="ss">networking =</span> <span class="p">{</span>
+        <span class="ss">firewall =</span> <span class="p">{</span>
+          <span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+        <span class="p">};</span>
+        <span class="c1"># Use systemd-resolved inside the container</span>
+        <span class="c1"># Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686</span>
+        <span class="ss">useHostResolvConf =</span> lib<span class="o">.</span>mkForce <span class="no">false</span><span class="p">;</span>
+      <span class="p">};</span>
+
+      services<span class="o">.</span>resolved<span class="o">.</span><span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+</code></pre></div>
+</p>
+<p>This will create an empty container named "forgejo". Run <code>machinectl list</code> to
+see if it's there.</p>
+<p>This container autostart with the system and is ephemeral, which means it will
+not leave any trace after itself in the filesystem (guest will have a snapshot
+of the filesystem).</p>
+<p>The <code>ephemeral = true;</code> is not necessary at all but it nice to have if you want
+to get closer to the stateless containers.</p>
+<h1 id="network">Network</h1>
+<p>For single container define private network:</p>
+<p>
+            <div  class="highlight"  id="code-b617997f-6cb3-11f0-a527-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617997f-6cb3-11f0-a527-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="w"> </span>containers.forgejo = {
+<span class="w"> </span>  autoStart = true;
+<span class="w"> </span>  ephemeral = true;
+<span class="gi">+  privateNetwork = true;</span>
+<span class="gi">+  hostAddress = &quot;10.10.10.100&quot;;</span>
+<span class="gi">+  localAddress = &quot;10.10.10.40&quot;;</span>
+<span class="w"> </span>  config = {
+<span class="w"> </span>    config,
+<span class="w"> </span>    pkgs,
+</code></pre></div>
+</p>
+<p>The <code>privateNetwork = true;</code> isolates guest network stack from the host's one.
+If not set your guest will have access to all network interfaces your host has.
+The output of <code>ip a</code> will be the same for both.</p>
+<p>With private network, nspawn will create a virtual network interface. One end of
+this interface will be on the host, with IP <code>hostAddress = "10.10.10.100";</code>, and
+the other in the guest, with IP <code>localAddress = "10.10.10.40";</code>.</p>
+<p>Now, ping should work both ways.</p>
+<p>For multiple containers you will need a network bridge. I prefer using
+systemd-networkd for this.</p>
+<p>First thing first let's enable <code>networkd</code> and create a bridge:</p>
+<p>
+            <div  class="highlight"  id="code-b617a5b9-6cb3-11f0-82e4-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617a5b9-6cb3-11f0-82e4-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gi">+systemd.network.enable = true;</span>
+<span class="gi">+systemd.network.wait-online.enable = false;</span>
+<span class="gi">+# Need to be removed if NetworkManager is not used</span>
+<span class="gi">+networking.useNetworkd = true;</span>
+<span class="gi">+</span>
+<span class="gi">+systemd.network = {</span>
+<span class="gi">+  netdevs.&quot;cbr&quot; = {</span>
+<span class="gi">+    netdevConfig = {</span>
+<span class="gi">+      Name = &quot;cbr&quot;;</span>
+<span class="gi">+      Kind = &quot;bridge&quot;;</span>
+<span class="gi">+    };</span>
+<span class="gi">+  };</span>
+<span class="gi">+};</span>
+<span class="gi">+</span>
+<span class="w"> </span>containers.forgejo = {
+<span class="w"> </span>  autoStart = true;
+<span class="w"> </span>  ephemeral = true;
+<span class="w"> </span>  config = {
+<span class="w"> </span>    config,
+<span class="w"> </span>    pkgs,
+</code></pre></div>
+</p>
+<p>Then we need to configure network for this bridge, meaning assign some IP
+address, set gateway and a route for other network nodes.</p>
+<p>
+            <div  class="highlight"  id="code-b617b461-6cb3-11f0-ae6f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617b461-6cb3-11f0-ae6f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -10,6 +10,24 @@ systemd.network = {</span>
+<span class="w"> </span>      Kind = &quot;bridge&quot;;
+<span class="w"> </span>    };
+<span class="w"> </span>  };
+<span class="gi">+</span>
+<span class="gi">+  networks = {</span>
+<span class="gi">+    # Assign IP to host end of a bridge (although I suppose all ends of the</span>
+<span class="gi">+    # bridge are on the host side of things)</span>
+<span class="gi">+    &quot;20-br0-uplink&quot; = {</span>
+<span class="gi">+      matchConfig.Name = &quot;cbr&quot;;</span>
+<span class="gi">+      networkConfig = {</span>
+<span class="gi">+        Address = &quot;10.10.10.100/24&quot;;</span>
+<span class="gi">+      };</span>
+<span class="gi">+      routes = [</span>
+<span class="gi">+        {</span>
+<span class="gi">+          Gateway = &quot;10.10.10.100&quot;;</span>
+<span class="gi">+          Source = &quot;10.10.10.0/24&quot;;</span>
+<span class="gi">+          Destination = &quot;10.10.10.0/24&quot;;</span>
+<span class="gi">+        }</span>
+<span class="gi">+      ];</span>
+<span class="gi">+    };</span>
+<span class="gi">+  };</span>
+<span class="w"> </span>};
+
+<span class="w"> </span>containers.forgejo = {
+</code></pre></div>
+</p>
+<p>Finally, add a container to the network:</p>
+<p>
+            <div  class="highlight"  id="code-b617c374-6cb3-11f0-b294-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617c374-6cb3-11f0-b294-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -15,6 +15,10 @@ systemd.network = {</span>
+<span class="w"> </span>containers.forgejo = {
+<span class="w"> </span>  autoStart = true;
+<span class="w"> </span>  ephemeral = true;
+<span class="gi">+  privateNetwork = true;</span>
+<span class="gi">+  hostBridge = &quot;cbr&quot;;</span>
+<span class="gi">+  localAddress = &quot;10.10.10.40/24&quot;;</span>
+<span class="w"> </span>  config = {
+<span class="w"> </span>    config,
+<span class="w"> </span>    pkgs,
+</code></pre></div>
+</p>
+<p>The <code>hostBridge = "cbr";</code> is the key, it adds host's side of virtual ethernet
+link to the <code>cbr</code> bridge create by networkd.</p>
+<h1 id="sharing-directories">Sharing directories</h1>
+<p>Sharing directories is pretty straightforward:</p>
+<p>
+            <div  class="highlight"  id="code-b617cfa5-6cb3-11f0-8218-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617cfa5-6cb3-11f0-8218-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -44,6 +44,16 @@ containers.forgejo = {</span>
+<span class="w"> </span>  privateNetwork = true;
+<span class="w"> </span>  hostBridge = &quot;cbr&quot;;
+<span class="w"> </span>  localAddress = &quot;10.10.10.40/24&quot;;
+<span class="gi">+  bindMounts = {</span>
+<span class="gi">+    &quot;/storage&quot; = {</span>
+<span class="gi">+      hostPath = &quot;/storage&quot;;</span>
+<span class="gi">+      isReadOnly = false;</span>
+<span class="gi">+    };</span>
+<span class="gi">+    &quot;/var/lib/forgejo&quot; = {</span>
+<span class="gi">+      hostPath = &quot;/storage/var/lib/forgejo&quot;;</span>
+<span class="gi">+      isReadOnly = false;</span>
+<span class="gi">+    };</span>
+<span class="gi">+  };</span>
+<span class="w"> </span>  config = {
+<span class="w"> </span>    config,
+<span class="w"> </span>    pkgs,
+</code></pre></div>
+</p>
+<p>This maps two directories <code>/storage</code> on the host to <code>/storage</code> on the guest and
+<code>/storage/var/lib/forgejo</code> on the host to <code>/var/lib/forgejo</code> on the guest.</p>
+<p>With stateless containers we can store Forgejo configuration on the host and
+just pass it to the container.</p>
+<p>On the host, this directories should have all necessary permission for the guest
+user to be able to access it. On NixOS directory creating can be declared with
+<code>systemd.tmpfiles</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b617ddd3-6cb3-11f0-ad5d-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617ddd3-6cb3-11f0-ad5d-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -38,6 +38,21 @@ systemd.network = {</span>
+<span class="w"> </span>  };
+<span class="w"> </span>};
+
+<span class="gi">+users.users.forgejo = {</span>
+<span class="gi">+  isNormalUser = true;</span>
+<span class="gi">+  uid = 3000;</span>
+<span class="gi">+  group = &quot;forgejo&quot;;</span>
+<span class="gi">+};</span>
+<span class="gi">+</span>
+<span class="gi">+users.groups.forgejo = {</span>
+<span class="gi">+  gid = 3000;</span>
+<span class="gi">+};</span>
+<span class="gi">+</span>
+<span class="gi">+systemd.tmpfiles.rules = [</span>
+<span class="gi">+  &quot;d /storage 700 forgejo forgejo -&quot;</span>
+<span class="gi">+  &quot;d /storage/var/lib/forgejo 700 forgejo forgejo -&quot;</span>
+<span class="gi">+];</span>
+<span class="gi">+</span>
+<span class="w"> </span>containers.forgejo = {
+<span class="w"> </span>  autoStart = true;
+<span class="w"> </span>  ephemeral = true;
+</code></pre></div>
+</p>
+<p>Note, that we also need to create a user with a UID/GID on the host. The same
+should be done in container.</p>
+<p>
+            <div  class="highlight"  id="code-b617ec41-6cb3-11f0-b4d1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617ec41-6cb3-11f0-b4d1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -80,6 +80,9 @@ containers.forgejo = {</span>
+<span class="w"> </span>      vim
+<span class="w"> </span>    ];
+
+<span class="gi">+    users.users.forgejo.uid = 3000;</span>
+<span class="gi">+    users.groups.forgejo.gid = 3000;</span>
+<span class="gi">+</span>
+<span class="w"> </span>    system.stateVersion = &quot;25.05&quot;;
+
+<span class="w"> </span>    networking = {
+</code></pre></div>
+</p>
+<h1 id="port-forwarding">Port Forwarding</h1>
+<p>For port forwarding use:</p>
+<p>
+            <div  class="highlight"  id="code-b617f86b-6cb3-11f0-a2d0-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b617f86b-6cb3-11f0-a2d0-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -69,6 +69,13 @@ containers.forgejo = {</span>
+<span class="w"> </span>      isReadOnly = false;
+<span class="w"> </span>    };
+<span class="w"> </span>  };
+<span class="gi">+  forwardPorts = [</span>
+<span class="gi">+    {</span>
+<span class="gi">+      containerPort = 2222;</span>
+<span class="gi">+      hostPort = 3333;</span>
+<span class="gi">+      protocol = &quot;tcp&quot;;</span>
+<span class="gi">+    }</span>
+<span class="gi">+  ];</span>
+<span class="w"> </span>  config = {
+<span class="w"> </span>    config,
+<span class="w"> </span>    pkgs,
+</code></pre></div>
+</p>
+<p>This will open port 3333 on the host and forward traffic to the port 2222 on
+container. </p>
+<p>I prefer to use <code>nftables</code>, as this way I can have more flexible setup:</p>
+<p>
+            <div  class="highlight"  id="code-b61805e3-6cb3-11f0-956f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61805e3-6cb3-11f0-956f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -53,6 +53,20 @@ systemd.tmpfiles.rules = [</span>
+<span class="w"> </span>  &quot;d /storage/var/lib/forgejo 700 forgejo forgejo -&quot;
+<span class="w"> </span>];
+
+<span class="gi">+networking = {</span>
+<span class="gi">+  nftables = {</span>
+<span class="gi">+    enable = true;</span>
+<span class="gi">+    ruleset = &#39;&#39;</span>
+<span class="gi">+      table ip nat {</span>
+<span class="gi">+        chain PREROUTING {</span>
+<span class="gi">+          type nat hook prerouting priority dstnat; policy accept;</span>
+<span class="gi">+          iifname &quot;eth1&quot; tcp dport 3333 dnat to 10.10.10.40:2222</span>
+<span class="gi">+        }</span>
+<span class="gi">+      }</span>
+<span class="gi">+    &#39;&#39;;</span>
+<span class="gi">+  };</span>
+<span class="gi">+};</span>
+<span class="gi">+</span>
+<span class="w"> </span>containers.forgejo = {
+<span class="w"> </span>  autoStart = true;
+<span class="w"> </span>  ephemeral = true;
+</code></pre></div>
+</p>
+<p>If you're using firewall don't forget to open these ports</p>
+<p>
+            <div  class="highlight"  id="code-b6181480-6cb3-11f0-be0e-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6181480-6cb3-11f0-be0e-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="gu">@@ -54,6 +54,9 @@ systemd.tmpfiles.rules = [</span>
+<span class="w"> </span>];
+
+<span class="w"> </span>networking = {
+<span class="gi">+  firewall.allowedTCPPorts = [</span>
+<span class="gi">+    3333</span>
+<span class="gi">+  ];</span>
+<span class="w"> </span>  nftables = {
+<span class="w"> </span>    enable = true;
+<span class="w"> </span>    ruleset = &#39;&#39;
+<span class="gu">@@ -109,6 +112,9 @@ containers.forgejo = {</span>
+<span class="w"> </span>    networking = {
+<span class="w"> </span>      firewall = {
+<span class="w"> </span>        enable = true;
+<span class="gi">+        allowedTCPPorts = [</span>
+<span class="gi">+          2222</span>
+<span class="gi">+        ];</span>
+<span class="w"> </span>      };
+<span class="w"> </span>      # Use systemd-resolved inside the container
+<span class="w"> </span>      # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
+</code></pre></div>
+</p>
+<h1 id="bonus-points">Bonus points</h1>
+<h2 id="rootless-containers">Rootless containers</h2>
+<p>Running nspawn container without root would be really nice improvement to
+security of the host system, but this requires creating disk image of the guest
+system first. In [this repository][2], you can find how to achieve it.</p>
+<p>But to run nspawn with an image instead of directory tree will also require
+modification to NixOS's <code>containers.</code> implementation as it doesn't currently
+support <code>--image</code> argument.</p>
+<p>Sorry, no solution here for now :&lt;</p>
+<h2 id="sharing-gpu">Sharing GPU</h2>
+<p>Jellyfin/Plex container will need access to GPU for transcoding.</p>
+<p>Device virtualization is not supported by linux kernel. That means that we can
+not make few virtual isolated copies of the device. Therefore, passing GPU to a
+container basically is not that different then using it outside of the
+container.</p>
+<p>Citing systemd maintainer it's ["awful hack"][6] but it works:</p>
+<p>
+            <div  class="highlight"  id="code-b618238b-6cb3-11f0-a5af-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b618238b-6cb3-11f0-a5af-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>
+</code></pre></div>
+</p>
+<p>1: https://lwn.net/Articles/572957/
+2: https://github.com/tfc/nspawn-nixos/tree/main
+3: https://people.kernel.org/brauner/runtimes-and-the-curse-of-the-privileged-container
+4: https://opensource.com/business/14/7/docker-security-selinux
+5: https://forgejo.org/
+6: https://github.com/systemd/systemd/issues/10960</p>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//how-to-run-application-in-container.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/drafts/how-to-run-application-in-container.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrej"
+      },
+      "headline": "How to run an application in container on NixOS",
+      "description": "Containers are an easy way to secure and isolate application running on",
+      "datePublished": "2025-06-18 00:00:00+02:00",
+      "dateModified": "2025-06-18 00:00:00",
+      "keywords": "",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

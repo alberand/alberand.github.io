@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Latex - Nice color boxes - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Latex - Nice color boxes" />
+		<meta name="date" content="2016-08-11 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2016-08-11 00:00:00+02:00" />
+		<meta property="og:title" content="Latex - Nice color boxes" />
+		<meta property="og:url" content="https://alberand.com/latex-bootstrap-code.html" />
+
+			<meta property="og:description" content="How to create nice text highlighting in Latex document" />
+			<meta name="description" content="How to create nice text highlighting in Latex document" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Latex - Nice color boxes </h1>
+
+      <time id="title-date">
+          11.08.2016
+      </time>
+  </header>
+  <p>Do you like those little highlighting for commands, files, code snippets and
+other stuff used on the sites with Bootstrap framework? I think it's really good
+for emphasizing key points in your text especially in technical writing. For
+example, look at this paragraph taken from one of my documentation PDFs.</p>
+<p>
+<figure class="article-figure"><img alt="Screenshot of PDF document with Bootstrap highlighting" src="images/latex_pdf_bcode_example.png"></figure>
+</p>
+<p>There is not too many default text decoration styles to play with to emphasize
+something in Latex. Most of the times the standard <strong>bold</strong> and <em>italic</em> are
+used. In my opinion that isn't enough and those two methods attract less
+attention than fancy colorful highlightings. Try to look at some articles while
+scrolling, you will see that the eye immediately catch those little red boxes.</p>
+<p>I wrote a function for Latex, which implements this type of highlighting. All you
+need to do is just add the following code to your Latex document.</p>
+<p>
+            <div  class="highlight"  id="code-b6382fb8-6cb3-11f0-9b67-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6382fb8-6cb3-11f0-9b67-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c">% Include package for drawing color boxes</span>
+<span class="k">\usepackage</span><span class="nb">{</span>tcolorbox<span class="nb">}</span>
+
+<span class="c">% Define colors</span>
+<span class="k">\definecolor</span><span class="nb">{</span>codeBg<span class="nb">}{</span>rgb<span class="nb">}{</span>0.976, 0.949, 0.956<span class="nb">}</span>
+<span class="k">\definecolor</span><span class="nb">{</span>codeColor<span class="nb">}{</span>rgb<span class="nb">}{</span>0.780, 0.145, 0.305<span class="nb">}</span>
+
+<span class="c">% Define new command</span>
+<span class="k">\newtcbox</span><span class="nb">{</span><span class="k">\bCode</span><span class="nb">}{</span>
+    nobeforeafter,
+    fontupper=<span class="k">\color</span><span class="nb">{</span>codeColor<span class="nb">}</span>,
+    colframe=codeBg,
+    colback=codeBg,
+    boxrule=0.1pt,
+    arc=3pt,
+    boxsep=0pt,
+    left=3pt,
+    right=3pt,
+    top=3pt,
+    bottom=4pt,
+    tcbox raise base<span class="nb">}</span>
+</code></pre></div>
+</p>
+<p>Depending on your document settings, sometimes, you will need to change paddings 
+of the box (left/right/top/bottom) to make it symmetric.</p>
+<p>This function can be easily used with a <code>\bCode{your code}</code> command.</p>
+<h4 id="references">References:</h4>
+<ul>
+<li><a href="http://getbootstrap.com/">Bootstrap?</a></li>
+<li><a href="https://www.latex-project.org/">Latex?</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//latex_bootstrap_code.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/latex-bootstrap-code.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Latex - Nice color boxes",
+      "description": "How to create nice text highlighting in Latex document",
+      "datePublished": "2016-08-11 00:00:00+02:00",
+      "dateModified": "2020-01-03 00:00:00",
+      "keywords": "Latex, Bootstrap, code snippet, highlighting",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

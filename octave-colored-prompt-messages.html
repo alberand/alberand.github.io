@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Octave - colored prompt messages - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Octave - colored prompt messages" />
+		<meta name="date" content="2016-10-24 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2016-10-24 00:00:00+02:00" />
+		<meta property="og:title" content="Octave - colored prompt messages" />
+		<meta property="og:url" content="https://alberand.com/octave-colored-prompt-messages.html" />
+
+			<meta property="og:description" content="How to print colorful messages in the Octave prompt using shell escape sequences." />
+			<meta name="description" content="How to print colorful messages in the Octave prompt using shell escape sequences." />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Octave - colored prompt messages </h1>
+
+      <time id="title-date">
+          24.10.2016
+      </time>
+  </header>
+  <p>
+<figure class="article-figure"><img alt="Octave Prompt with colors" src="images/octave_messages.png"></figure>
+</p>
+<p>In Unix terminal we can use colorful output for emphasizing important pieces of 
+information such as fatal errors or warnings. As a student in the Technical
+University I have a lot of problem sets to solve in <a href="https://www.gnu.org/software/octave/doc/v4.0.0/index.html">Octave</a>. Its prompt is
+similar to the normal Unix terminal (and I suppose it is). To make the output of
+my scripts more readable I tried to implement a few function to colorize some
+important messages.</p>
+<p>The functions make usage of <strong>fprintf</strong> function which draw obtained text to the 
+standard output or stderr (first argument is the output stream). The second
+argument is construction which wraps the message passed as <code>msg</code> by special so
+called ANSI escape sequences. These sequences tells prompt to display text with
+some special styling such as color, underline, background color etc.</p>
+<p>
+            <div  class="highlight"  id="code-b6333b6b-6cb3-11f0-a9a1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6333b6b-6cb3-11f0-a9a1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c">% The set of function to print fancy messages in octave prompt. To use it just </span>
+<span class="c">% call function name and as argument send a message you want to show.</span>
+<span class="c">% To test it use following commands:</span>
+<span class="c">% infom(&quot;Information message&quot;); error(&quot;Error message&quot;); </span>
+<span class="c">% success(&quot;Success message&quot;); head(&quot;This is head message&quot;);</span>
+
+<span class="c">% Prevent octave to run it immediately.</span>
+<span class="mi">1</span><span class="p">;</span>
+
+<span class="k">function</span><span class="w"> </span><span class="nf">infom</span><span class="p">(</span>msg<span class="p">)</span>
+<span class="w">    </span><span class="nb">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[94m&#39;</span><span class="w"> </span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="n">endfunction</span>
+
+<span class="s">function</span><span class="w"> </span><span class="s">error(msg)</span>
+<span class="w">    </span><span class="nb">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[91m&#39;</span><span class="w"> </span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="n">endfunction</span>
+
+<span class="s">function</span><span class="w"> </span><span class="s">success(msg)</span>
+<span class="w">    </span><span class="nb">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[32m&#39;</span><span class="w"> </span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[0m\n&#39;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="n">endfunction</span>
+
+<span class="s">function</span><span class="w"> </span><span class="s">head(msg)</span>
+<span class="w">    </span><span class="nb">fprintf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="p">[</span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[90m&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;==============================================================&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;========\n&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="n">msg</span><span class="w"> </span><span class="s">&#39;\n&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;==============================================================&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;========\n&#39;</span><span class="p">,</span><span class="k">...</span>
+<span class="w">        </span><span class="nb">char</span><span class="p">(</span><span class="mi">27</span><span class="p">),</span><span class="w"> </span><span class="k">...</span>
+<span class="w">        </span><span class="s">&#39;[0m&#39;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="n">endfunction</span>
+</code></pre></div>
+</p>
+<p>Background and foreground colors can be changed in the construction shown below.
+It consist of escape character <code>^</code> (or <code>\e</code>, <code>\033</code>, <code>\x1B</code>) and format
+code surrounded by the <strong>[</strong> and <strong>m</strong> characters. The first number is
+responsible for text formatting (normal, bold, dim, underlined...), the second
+for background color and third one for foreground color. </p>
+<div style="width: 150px; margin: 0 auto; font-size: 22px; padding: 0px 0px 5px
+0px; letter-spacing: 2px;">
+    ^[0;49;30m
+</div>
+
+<p>So, the sequence above means 0 - normal text (all attributes to default), 49 -
+default background color and 30 - black text color. You can found more codes at
+the <a href="https://misc.flogisoft.com/bash/tip_colors_and_formatting">following page</a> and in table below.</p>
+<style>
+/* DivTable.com */
+.divTable{
+    display: table;
+    margin: 0 auto;
+    border-top: 1px #DEDEDE solid;
+    border-bottom: 1px #DEDEDE solid;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.divTableRow {
+    display: table-row;
+}
+.divTableHeading {
+    display: table-header-group;
+    background-color: #EEE;
+    font-weight: bold;
+}
+
+.divTableCell, .divTableHead {
+    display: table-cell;
+    padding: 3px 10px;
+}
+
+.divTableHead {
+    border-bottom: 1px #DEDEDE solid
+}
+
+.divTableBody {
+    display: table-row-group;
+};
+</style>
+
+<div class="divTable">
+<div class="divTableBody">
+<div class="divTableRow">
+<div class="divTableHead">Code</div>
+<div class="divTableHead">Color</div>
+<div class="divTableHead">Preview</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">39</div>
+<div class="divTableCell">Default</div>
+<div class="divTableCell">
+  <img alt="Colors in the bash" src="./images/bash_colors/39.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">30</div>
+<div class="divTableCell">Black</div>
+<div class="divTableCell">
+  <img alt="Exapmle of colors in bash" src="./images/bash_colors/30.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">31</div>
+<div class="divTableCell">Red</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/31.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">32</div>
+<div class="divTableCell">Green</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/32.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">33</div>
+<div class="divTableCell">Yellow</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/33.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">34</div>
+<div class="divTableCell">Blue</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/34.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">35</div>
+<div class="divTableCell">Magenta</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/35.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">36</div>
+<div class="divTableCell">Cyan</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/36.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">37</div>
+<div class="divTableCell">Light Gray</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/37.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">90</div>
+<div class="divTableCell">Dark Gray</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/90.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">91</div>
+<div class="divTableCell">Light Red</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/91.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">92</div>
+<div class="divTableCell">Light Green</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/92.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">93</div>
+<div class="divTableCell">Light Yellow</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/93.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">94</div>
+<div class="divTableCell">Light Blue</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/94.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">95</div>
+<div class="divTableCell">Light Magenta</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/95.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">96</div>
+<div class="divTableCell">Light Cyan</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/96.png" />
+</div>
+</div>
+<div class="divTableRow">
+<div class="divTableCell">97</div>
+<div class="divTableCell">White</div>
+<div class="divTableCell">
+  <img alt="Example of colorful output in bash" src="./images/bash_colors/97.png" />
+</div>
+</div>
+</div>
+</div>
+
+<p>How to use it? It's easy enough, all you need to do are few follow steps:</p>
+<ol>
+<li>Download the script</li>
+<li>Create directory where you will store this script for further usage</li>
+<li>Then in your Octave's config (by default it should be <code>~/.octaverc</code> on Linux
+   system) add and don't forgot to change next commands:</li>
+</ol>
+<p>
+            <div  class="highlight"  id="code-b6337007-6cb3-11f0-b5a2-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6337007-6cb3-11f0-b5a2-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># Change to address where your script is</span>
+addpath<span class="o">(</span><span class="s2">&quot;/home/andrew/Documents/Octave/&quot;</span><span class="o">)</span>
+messages
+PAGER_FLAGS<span class="o">(</span><span class="s2">&quot;-r&quot;</span><span class="o">)</span>
+</code></pre></div>
+</p>
+<p>First line adds your directory to the global search. So, when you want to run
+this script you can just type in the Octave prompt <code>messages</code> and this script 
+will be run.</p>
+<p>Second line runs this script. Because this configuration file (<code>.octaverc</code>) is 
+run at the startup of the Octave this script will be automatically executed.
+Last command add parameter to <code>less</code> program which is used when output of your
+script isn't suitable for one screen of the terminal. This parameter is needed
+to correctly display colors while you see output over the <code>less</code> program.</p>
+<h4 id="references">References:</h4>
+<ul>
+<li><a href="https://www.gnu.org/software/octave/doc/v4.0.0/index.html">Octave Documentation</a></li>
+<li><a href="http://misc.flogisoft.com/bash/tip_colors_and_formatting">Bash colors and
+  formatting</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//octave_colored_messages.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/octave-colored-prompt-messages.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Octave - colored prompt messages",
+      "description": "How to print colorful messages in the Octave prompt using shell escape sequences.",
+      "datePublished": "2016-10-24 00:00:00+02:00",
+      "dateModified": "2020-01-03 00:00:00",
+      "keywords": "Octave, colored messages, colored prompt",
+      "image": "https://alberand.com/images/octave_messages.png",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Missing EFI entry for Linux - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Missing EFI entry for Linux" />
+		<meta name="date" content="2024-03-22 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2024-03-22 00:00:00+01:00" />
+		<meta property="og:title" content="Missing EFI entry for Linux" />
+		<meta property="og:url" content="https://alberand.com/missing-efi-entry.html" />
+
+			<meta property="og:description" content="Fixing missing EFI entry for Linux" />
+			<meta name="description" content="Fixing missing EFI entry for Linux" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Missing EFI entry for Linux </h1>
+
+      <time id="title-date">
+          22.03.2024
+      </time>
+  </header>
+  <p>In dual-booting system or during BIOS update, your EFI entry for booting Linux
+can disappear. To boot back into linux you need to get into UEFI shell. The
+easiest way is to boot Linux from USB key. Or if you have a fancy motherboard it
+can have UEFI shell out of the box as one of the boot options.</p>
+<h1 id="create-linux-usb-key">Create Linux USB key</h1>
+<p>There's plenty of examples how to do it. I booted into Windows and used
+<a href="https://rufus.ie/en/">Rufus</a> + <a href="https://archlinux.org/download/">Arch linux</a>. Arch already has UEFI shell built in.</p>
+<h1 id="finding-linux-boot">Finding Linux boot</h1>
+<p>Insert USB drive, change boot priority, boot it. You should see something like
+this:</p>
+<p>
+<figure class="article-figure"><img alt="Arch Linux USB key boot menu" src="images/arch-linux-boot-menu.png"></figure>
+</p>
+<p>After booting into shell you will see device list (all your HDD/SSD/NVME
+drives and partitions):</p>
+<p>
+<figure class="article-figure"><img alt="UEFI shell - devices (screenshot taken from Wikipedia)" src="images/UEFI_shell_2.2_screenshot.png"></figure>
+</p>
+<p>Handy commands:</p>
+<ul>
+<li><code>cls</code> clears screen</li>
+<li><code>map</code> lists all devices</li>
+<li><code>ls</code> lists directory content</li>
+<li><code>BLK15</code> goes into this device</li>
+<li><code>cd dir</code> go to the directory</li>
+</ul>
+<p>Now quite tedious part. You need to find which devices is the one with Linux. I
+have around 7 devices. With all partitions it ended up to be a ~17 different
+items.</p>
+<p>Mine was <code>BLK15</code> duh. To check which one is the one use <code>ls BLK15:</code> command.
+This will list directories and files on the partition/device. You need to find
+one which looks like Linux <code>/boot</code> directory, mine looks like this:</p>
+<p>
+            <div  class="highlight"  id="code-b61f18e0-6cb3-11f0-ad35-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61f18e0-6cb3-11f0-ad35-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="o">[</span>nix-shell:~<span class="o">]</span>$<span class="w"> </span>tree<span class="w"> </span>-L<span class="w"> </span><span class="m">1</span><span class="w"> </span>/boot
+/boot
+├──<span class="w"> </span>background.png
+├──<span class="w"> </span>converted-font.pf2
+├──<span class="w"> </span>EFI
+├──<span class="w"> </span>grub
+├──<span class="w"> </span>kernels
+└──<span class="w"> </span>loader
+</code></pre></div>
+</p>
+<p>You should have grub binary in there:</p>
+<p>
+            <div  class="highlight"  id="code-b61f2b3e-6cb3-11f0-a2c1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61f2b3e-6cb3-11f0-a2c1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>Shell&gt;<span class="w"> </span>ls<span class="w"> </span>BLK15:<span class="se">\E</span>FI<span class="se">\E</span>FI<span class="se">\g</span>rub<span class="se">\</span>
+grubx64.efi
+</code></pre></div>
+</p>
+<p>Typing <code>BLK15:\EFI\EFI\grub\grubx64.efi</code> will boot you into the grub and
+then into your system. <strong>Note!</strong> this path can be completely different for you.
+For example, mine is actually <code>BLK15:\EFI\NixOS-boot\grubx64.efi</code>.</p>
+<p>To find out which one is correct - run it. When you find the path which boots
+into your system - this is the one.</p>
+<h1 id="creating-efi-entry-to-make-it-permanent">Creating EFI entry to make it permanent</h1>
+<p>After you found which <code>*.efi</code> boots your Linux system - boot into the system.
+Install <code>efibootmgr</code> - this utility will make creating EFI entry very easy.</p>
+<p>In your system list disks with <code>lsblk</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b61f37e7-6cb3-11f0-9242-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61f37e7-6cb3-11f0-9242-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="o">[</span>nix-shell:~<span class="o">]</span>$<span class="w"> </span>lsblk
+NAME<span class="w">          </span>MAJ:MIN<span class="w"> </span>RM<span class="w">   </span>SIZE<span class="w"> </span>RO<span class="w"> </span>TYPE<span class="w">  </span>MOUNTPOINTS
+...
+sdc<span class="w">             </span><span class="m">8</span>:32<span class="w">   </span><span class="m">0</span><span class="w"> </span><span class="m">465</span>.8G<span class="w">  </span><span class="m">0</span><span class="w"> </span>disk
+├─sdc1<span class="w">          </span><span class="m">8</span>:33<span class="w">   </span><span class="m">0</span><span class="w">   </span>550M<span class="w">  </span><span class="m">0</span><span class="w"> </span>part<span class="w">  </span>/boot
+└─sdc2<span class="w">          </span><span class="m">8</span>:34<span class="w">   </span><span class="m">0</span><span class="w"> </span><span class="m">465</span>.2G<span class="w">  </span><span class="m">0</span><span class="w"> </span>part
+<span class="w">  </span>└─crypted<span class="w">   </span><span class="m">254</span>:0<span class="w">    </span><span class="m">0</span><span class="w"> </span><span class="m">465</span>.2G<span class="w">  </span><span class="m">0</span><span class="w"> </span>crypt
+<span class="w">    </span>├─vg-swap<span class="w"> </span><span class="m">254</span>:1<span class="w">    </span><span class="m">0</span><span class="w">     </span>4G<span class="w">  </span><span class="m">0</span><span class="w"> </span>lvm<span class="w">   </span><span class="o">[</span>SWAP<span class="o">]</span>
+<span class="w">    </span>└─vg-home<span class="w"> </span><span class="m">254</span>:2<span class="w">    </span><span class="m">0</span><span class="w"> </span><span class="m">461</span>.2G<span class="w">  </span><span class="m">0</span><span class="w"> </span>lvm<span class="w">   </span>/var/lib/containers/storage/overlay
+<span class="w">                                         </span>/export/alberand
+<span class="w">                                         </span>/nix/store
+<span class="w">                                         </span>/
+...
+</code></pre></div>
+</p>
+<p>My system disk looks as above. I have two partitions <code>/dev/sdc1</code> (or <code>/boot</code>)
+and <code>/dev/sdc2</code>. The first one has my <code>grubx64.efi</code>. The second one is LUKS
+encrypted <code>/</code> and <code>/home</code> of my system.</p>
+<p>To create an EFI boot entry run:</p>
+<p>
+            <div  class="highlight"  id="code-b61f59df-6cb3-11f0-b638-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61f59df-6cb3-11f0-b638-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>efibootmgr<span class="w"> </span>---create<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--disk<span class="w"> </span>/dev/sdc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--part<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--label<span class="w"> </span>NixOS<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--loader<span class="w"> </span><span class="s1">&#39;\EFI\NixOS-boot\grubx64.efi&#39;</span>
+</code></pre></div>
+</p>
+<ul>
+<li><code>--disk</code> is a disk path</li>
+<li><code>--part</code> is a partition number on the disk (in my case it's 1)</li>
+<li><code>--label</code> is just a name which you will see in your BIOS boot menu</li>
+<li><code>--loader</code> path to the bootloader (e.g. Grub in my case)</li>
+</ul>
+<p>That should be it. Reboot. Set it as default entry and you have it done.</p>
+<h1 id="system-doesnt-boot-grub-rescue">System doesn't boot, grub rescue&gt;</h1>
+<p>Incorrect <code>--loader</code> can lead to a broken boot. I faced it when picked the wrong
+<code>grubx64.efi</code> path. This can be debugged in the Grub rescue shell by setting
+correct path:</p>
+<p>
+            <div  class="highlight"  id="code-b61f68e0-6cb3-11f0-9828-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61f68e0-6cb3-11f0-9828-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="c1"># This was wrong path vvv</span>
+grub<span class="w"> </span>rescue&gt;<span class="w"> </span><span class="nb">set</span>
+<span class="nv">cmdpath</span><span class="o">=</span><span class="s1">&#39;\EFI\GRUB\x86_64-efi&#39;</span>
+<span class="nv">prefix</span><span class="o">=</span><span class="s1">&#39;\EFI\GRUB\x86_64-efi&#39;</span>
+<span class="nv">root</span><span class="o">=</span><span class="s1">&#39;(hd3,gp1)&#39;</span>
+
+<span class="c1"># This how I&#39;ve fixed the path and booted into the system vvv</span>
+grub<span class="w"> </span>rescue&gt;<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">cmdpath</span><span class="o">=</span><span class="s1">&#39;\EFI\NixOS-boot&#39;</span>
+grub<span class="w"> </span>rescue&gt;<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">prefix</span><span class="o">=</span><span class="s1">&#39;\EFI\NixOS-boot&#39;</span>
+grub<span class="w"> </span>rescue&gt;<span class="w"> </span>insmod<span class="w"> </span>normal
+grub<span class="w"> </span>rescue&gt;<span class="w"> </span>normal
+booting...
+</code></pre></div>
+</p>
+<p>Then, after booting into your system, change the path to correct one with
+<code>efibootmgr</code>. </p>
+<p>Use <code>efibootmgr --delete-bootnum --bootnum 2</code> to delete wrong entry at index
+0002.</p>
+<h1 id="references">References</h1>
+<ul>
+<li><a href="https://rufus.ie/en/">Rufus</a></li>
+<li><a href="https://archlinux.org/download/">Arch Linux Download</a> - scroll down and pick one of the mirrors, closest to
+  you, or use torrents</li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//missing-efi-entry.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/missing-efi-entry.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Missing EFI entry for Linux",
+      "description": "Fixing missing EFI entry for Linux",
+      "datePublished": "2024-03-22 00:00:00+01:00",
+      "dateModified": "2024-03-22 00:00:00",
+      "keywords": "linux, boot, grub, efibootmgr, bios",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

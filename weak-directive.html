@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+What is pragma weak (GCC)? - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="What is pragma weak (GCC)?" />
+		<meta name="date" content="2019-12-16 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2019-12-16 00:00:00+01:00" />
+		<meta property="og:title" content="What is pragma weak (GCC)?" />
+		<meta property="og:url" content="https://alberand.com/weak-directive.html" />
+
+			<meta property="og:description" content="Using Linker's directive '#pragma weak' to define optional functions or use it for debugging" />
+			<meta name="description" content="Using Linker's directive '#pragma weak' to define optional functions or use it for debugging" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> What is pragma weak (GCC)? </h1>
+
+      <time id="title-date">
+          16.12.2019
+      </time>
+  </header>
+  <p>From this very <a href="http://cseweb.ucsd.edu/~ricko/CSE131/the%20inside%20story%20on%20shared%20libraries%20and%20dynamic%20loading.pdf">interesting article</a> about linking of executables I found out
+that there exist a <code>#pragma weak foofunction</code> directive. It tells linker to
+handle the function as weakly defined. What it means is that if linker
+fails to find definition (implementation) of the function it will skip the
+function and won't show any errors. In this note I will demonstrate how does it
+work.</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#example-application">Example Application</a></li>
+<li><a href="#what-does-pragma-weak-does">What does #pragma weak does?</a></li>
+<li><a href="#look-inside">Look inside</a><ul>
+<li><a href="#thoughts">Thoughts</a><ul>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="example-application">Example Application</h1>
+<p>Let's create a simple example:</p>
+<p>
+            <div  class="highlight"  id="code-b6195504-6cb3-11f0-a9d6-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6195504-6cb3-11f0-a9d6-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="cp">#pragma weak debug</span>
+<span class="k">extern</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">debug</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">debug</span><span class="p">;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">debugfunc</span><span class="p">){</span>
+<span class="w">        </span><span class="p">(</span><span class="o">*</span><span class="n">debugfunc</span><span class="p">)(</span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>At line 2 we define debug function with an <code>extern</code> keyword. That means that
+this function can be defined in any of the application source files (or in any
+object file). The next line contains pointer (named <code>debugfunc</code>) to this
+function.</p>
+<p>In the <code>main()</code> in the if-condition we check that if <code>debugfunc</code> have anything
+but zero. If it is not zero we call it, otherwise application terminates.</p>
+<p>Next, let's create second file with the implementation of <code>debug</code> function. It
+is very very simple:</p>
+<p>
+            <div  class="highlight"  id="code-b619747c-6cb3-11f0-b1b1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619747c-6cb3-11f0-b1b1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;stdio.h&quot;</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">debug</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">str</span><span class="p">){</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[DEBUG] %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">str</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<h1 id="what-does-pragma-weak-does">What does #pragma weak does?</h1>
+<p>See what happens if we compile <code>main.c</code> only:</p>
+<p>
+            <div  class="highlight"  id="code-b6198993-6cb3-11f0-8a00-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6198993-6cb3-11f0-8a00-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-o<span class="w"> </span>app<span class="w"> </span>main.c
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>./app
+</code></pre></div>
+</p>
+<p>Nothing =). But if we compile <code>debug.c</code> and then link it together with newly
+compiled <code>main.c</code>, then:</p>
+<p>
+            <div  class="highlight"  id="code-b6199aa7-6cb3-11f0-a5df-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6199aa7-6cb3-11f0-a5df-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-c<span class="w"> </span>main.c
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-c<span class="w"> </span>debug.c
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-o<span class="w"> </span>app<span class="w"> </span>main.o<span class="w"> </span>debug.o
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>./app
+<span class="o">[</span>DEBUG<span class="o">]</span><span class="w"> </span>hello
+</code></pre></div>
+</p>
+<p>Note that to compile files separately without linking you need to use <code>-c</code>
+argument.</p>
+<p>In the first case linker couldn't find implementation for <code>debug()</code> and replace it
+with zero. Therefore, in all places where we reference <code>debug()</code> we get
+zero. As <code>debugfunc</code> pointer points to the <code>debug()</code> and also contains 0 it's
+not called.  In the second case linker found implementation for <code>debug()</code> and
+treat it as a normal function. In this case <code>debugfunc</code> is pointing to the
+<code>debug()</code> (non-zero address in memory) and therefore will be called.</p>
+<h1 id="look-inside">Look inside</h1>
+<p>Let's look what is really happening in the binaries and if it is true what is
+described in the previous paragraph. Firstly, let's compile both examples as two
+separated binaries for further comparison:</p>
+<p>
+            <div  class="highlight"  id="code-b619b4b5-6cb3-11f0-bd82-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619b4b5-6cb3-11f0-bd82-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-o<span class="w"> </span>app<span class="w"> </span>main.o
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>gcc<span class="w"> </span>-Wall<span class="w"> </span>-o<span class="w"> </span>appd<span class="w"> </span>main.o<span class="w"> </span>debug.o
+</code></pre></div>
+</p>
+<p>Next let's look what is the difference between them. With <code>nm</code> utility we can see
+that in the first binary there no <code>debug</code> symbol (reference to the function) at
+all.</p>
+<p>
+            <div  class="highlight"  id="code-b619c780-6cb3-11f0-a61e-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619c780-6cb3-11f0-a61e-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>nm<span class="w"> </span>app<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>debug
+<span class="m">0000000000004028</span><span class="w"> </span>D<span class="w"> </span>debugfunc
+
+andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>nm<span class="w"> </span>appd<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>debug
+<span class="m">0000000000001160</span><span class="w"> </span>T<span class="w"> </span>debug
+<span class="m">0000000000004030</span><span class="w"> </span>D<span class="w"> </span>debugfunc
+</code></pre></div>
+</p>
+<p>Actually, there quite a lot of small discrepancies between two binaries. You can
+look on the differences with the following command:</p>
+<p>
+            <div  class="highlight"  id="code-b619dda7-6cb3-11f0-a681-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619dda7-6cb3-11f0-a681-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>andrew<span class="w"> </span>at<span class="w"> </span>andrew-laptop<span class="w"> </span><span class="k">in</span><span class="w"> </span>/tmp/mainfun
+➔<span class="w"> </span>vimdiff<span class="w"> </span>&lt;<span class="o">(</span>objdump<span class="w"> </span>-d<span class="w"> </span>app<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>objdump<span class="w"> </span>-d<span class="w"> </span>appd<span class="o">)</span>
+</code></pre></div>
+</p>
+<p>Disassembly of the main function should be similar to this:</p>
+<p>
+            <div  class="highlight"  id="code-b619ef3f-6cb3-11f0-a910-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619ef3f-6cb3-11f0-a910-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>0000000000001119 &lt;main&gt;:
+    1119:       55                      push   %rbp
+    111a:       48 89 e5                mov    %rsp,%rbp
+    111d:       48 8b 05 04 2f 00 00    mov    0x2f04(%rip),%rax    # 4028 &lt;debugfunc&gt;
+    1124:       48 85 c0                test   %rax,%rax
+    1127:       74 10                   je     1139 &lt;main+0x20&gt;
+    1129:       48 8b 05 f8 2e 00 00    mov    0x2ef8(%rip),%rax    # 4028 &lt;debugfunc&gt;
+    1130:       48 8d 3d cd 0e 00 00    lea    0xecd(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;
+    1137:       ff d0                   callq  *%rax
+    1139:       b8 00 00 00 00          mov    $0x0,%eax
+    113e:       5d                      pop    %rbp
+    113f:       c3                      retq
+</code></pre></div>
+</p>
+<p>The first two instruction are used to save address of the previous stack frame
+and switch to the frame local the current function (for more info see <a href="https://stackoverflow.com/questions/41912684/what-is-the-purpose-of-the-rbp-register-in-x86-64-assembler">[4]</a>).
+The third one moves value located at address 0x4028 to the %rax register. This, in
+turn, is used in the following <code>test</code> instruction which checks if it is equals
+to zero and if so it sets <code>ZF</code> flag to 1 <a href="https://en.wikipedia.org/wiki/TEST_(x86_instruction)">[5]</a>. The next instruction <code>je</code>
+jumps to the address 1139 if <code>ZF</code> flag is equal to 1. The 1139 address is the
+end of the function (<code>return 0;</code>).</p>
+<p>The 0x4028 address is equal to 0x2f04 + %rip (0x1124 - the address of the next
+instruction). The %rip is used for relative referencing (see <a href="https://stackoverflow.com/questions/29421766/what-does-mov-offsetrip-rax-do">[6]</a>).</p>
+<p>What is located at address 0x4028? As we know that it is global static variable
+it should be somewhere in the <code>.data</code> section. We can find it out with following
+command:</p>
+<p>
+            <div  class="highlight"  id="code-b619faac-6cb3-11f0-9ed9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b619faac-6cb3-11f0-9ed9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>➔<span class="w"> </span>objdump<span class="w"> </span>-s<span class="w"> </span>-j<span class="w"> </span>.data<span class="w"> </span>app
+app:<span class="w">     </span>file<span class="w"> </span>format<span class="w"> </span>elf64-x86-64
+
+Contents<span class="w"> </span>of<span class="w"> </span>section<span class="w"> </span>.data:
+<span class="w"> </span><span class="m">4018</span><span class="w"> </span><span class="m">00000000</span><span class="w"> </span><span class="m">00000000</span><span class="w"> </span><span class="m">20400000</span><span class="w"> </span><span class="m">00000000</span><span class="w">  </span>........<span class="w"> </span>@......
+<span class="w"> </span><span class="m">4028</span><span class="w"> </span><span class="m">00000000</span><span class="w"> </span><span class="m">00000000</span><span class="w">                    </span>........
+</code></pre></div>
+</p>
+<p>As you can see it is all zeros. So, ZF will be 0 and <code>je</code> will jump to 1139.</p>
+<p>In opposite case if there was something at 4028 then %rax wasn't zero, ZF was set
+to zero and <code>je</code> didn't jump. Even though the second binary has a little bit
+different addresses the <code>main()</code> is completely the same.</p>
+<p>
+            <div  class="highlight"  id="code-b61a109b-6cb3-11f0-a062-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61a109b-6cb3-11f0-a062-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>0000000000001139 &lt;main&gt;:
+    1139:       55                      push   %rbp
+    113a:       48 89 e5                mov    %rsp,%rbp
+    113d:       48 8b 05 ec 2e 00 00    mov    0x2eec(%rip),%rax    # 4030 &lt;debugfunc&gt;
+    1144:       48 85 c0                test   %rax,%rax
+    1147:       74 10                   je     1159 &lt;main+0x20&gt;
+    1149:       48 8b 05 e0 2e 00 00    mov    0x2ee0(%rip),%rax    # 4030 &lt;debugfunc&gt;
+    1150:       48 8d 3d ad 0e 00 00    lea    0xead(%rip),%rdi     # 2004 &lt;_IO_stdin_used+0x4&gt;
+    1157:       ff d0                   callq  *%rax
+    1159:       b8 00 00 00 00          mov    $0x0,%eax
+    115e:       5d                      pop    %rbp
+    115f:       c3                      retq
+</code></pre></div>
+</p>
+<p>The address of the to which <code>debugfunc</code> points is 0x4030. Again, let's use
+<code>objdump</code> to see what is in the <code>.data</code> section:</p>
+<p>
+            <div  class="highlight"  id="code-b61a1c0b-6cb3-11f0-80cc-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b61a1c0b-6cb3-11f0-80cc-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>➔<span class="w"> </span>objdump<span class="w"> </span>-s<span class="w"> </span>-j<span class="w"> </span>.data<span class="w"> </span>appd
+
+appd:<span class="w">     </span>file<span class="w"> </span>format<span class="w"> </span>elf64-x86-64
+
+Contents<span class="w"> </span>of<span class="w"> </span>section<span class="w"> </span>.data:
+<span class="w"> </span><span class="m">4020</span><span class="w"> </span><span class="m">00000000</span><span class="w"> </span><span class="m">00000000</span><span class="w"> </span><span class="m">28400000</span><span class="w"> </span><span class="m">00000000</span><span class="w">  </span>........<span class="o">(</span>@......
+<span class="w"> </span><span class="m">4030</span><span class="w"> </span><span class="m">60110000</span><span class="w"> </span><span class="m">00000000</span><span class="w">                    </span><span class="sb">`</span>.......
+</code></pre></div>
+</p>
+<h2 id="thoughts">Thoughts</h2>
+<p>Personally, I don't think that it is a good approach to base your debugging
+function on this directive. As initially it was created for backward
+compatibility and general definition of function in the libraries (function
+overriding) <a href="https://gcc.gnu.org/onlinedocs/gcc/Weak-Pragmas.html">[2]</a>, <a href="https://en.wikipedia.org/wiki/Weak_symbol">[3]</a>. But if you are using third party library
+with weak function you can define your for debugging.</p>
+<p>I search through some GNU project and other projects for the use-cases of this
+directive. It seems like it is not commonly used. Only in some specific
+cases, for example, in <code>pthreadlib</code> and <code>musl-libc</code>. However, I think it is very
+convenient and interesting way to disable/enable debugging or development
+features. Maybe in future I will find a way how to use it.</p>
+<h4 id="references">References</h4>
+<ul>
+<li><a href="http://cseweb.ucsd.edu/~ricko/CSE131/the%20inside%20story%20on%20shared%20libraries%20and%20dynamic%20loading.pdf">The inside story on shared libraries and dynamic loading</a></li>
+<li><a href="https://gcc.gnu.org/onlinedocs/gcc/Weak-Pragmas.html">GCC docs - Weak Pragmas</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Weak_symbol">Wikipedia - Weak Symbol</a></li>
+<li><a href="https://stackoverflow.com/questions/41912684/what-is-the-purpose-of-the-rbp-register-in-x86-64-assembler">Stackoverflow question about stack frames</a></li>
+<li><a href="https://en.wikipedia.org/wiki/TEST_(x86_instruction)">TEST (x86 Instruction)</a></li>
+<li><a href="https://stackoverflow.com/questions/29421766/what-does-mov-offsetrip-rax-do">What does “mov offset(%rip), %rax” do?</a></li>
+</ul>
+<script>
+document.querySelector('div.highlight:nth-child(24)').setAttribute('style', 'margin: 0 -50px 0 -50px;')
+document.querySelector('div.highlight:nth-child(31)').setAttribute('style', 'margin: 0 -50px 0 -50px;')
+</script>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//weak_directive.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/weak-directive.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "What is pragma weak (GCC)?",
+      "description": "Using Linker's directive '#pragma weak' to define optional functions or use it for debugging",
+      "datePublished": "2019-12-16 00:00:00+01:00",
+      "dateModified": "2020-01-15 00:00:00",
+      "keywords": "linker, pragma, gcc",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Andrey Albershtein</title><link href="https://alberand.com/" rel="alternate"></link><link href="https://alberand.com/feeds/all-ru.atom.xml" rel="self"></link><id>https://alberand.com/</id><updated>2016-08-11T00:00:00+02:00</updated><entry><title>Latex - Выделение в стиле Bootstrap</title><link href="https://alberand.com/latex-bootstrap-code-ru.html" rel="alternate"></link><published>2016-08-11T00:00:00+02:00</published><updated>2016-08-11T00:00:00+02:00</updated><author><name>Aндрей Альберштейн</name></author><id>tag:alberand.com,2016-08-11:/latex-bootstrap-code-ru.html</id><summary type="html">&lt;p&gt;Если вам как и мне нравится эта красивая Bootstrap подсветка команд, файлов,
+кода, да чего угодно то это довольно легко можно реализовать для документов
+написанных с помощью Latex. Как по мне это куда более контрастное выделение
+информации нежели с помощью курсива или жирного шрифта.&lt;/p&gt;
+&lt;div style="margin: 20px 0;"&gt;
+    &lt;img class="image" alt="Screenshot of PDF document with Bootstrap highlighting" src="https://alberand.com/images/latex_pdf_bcode_example.png"&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Я написал функцию для Latex, которая …&lt;/p&gt;</summary><content type="html">&lt;p&gt;Если вам как и мне нравится эта красивая Bootstrap подсветка команд, файлов,
+кода, да чего угодно то это довольно легко можно реализовать для документов
+написанных с помощью Latex. Как по мне это куда более контрастное выделение
+информации нежели с помощью курсива или жирного шрифта.&lt;/p&gt;
+&lt;div style="margin: 20px 0;"&gt;
+    &lt;img class="image" alt="Screenshot of PDF document with Bootstrap highlighting" src="https://alberand.com/images/latex_pdf_bcode_example.png"&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Я написал функцию для Latex, которая предоставляет подобную подсветку. Её очень
+легко использовать, единственное что нужно это добавить следующий кусок кода в
+свой документ:&lt;/p&gt;
+&lt;p&gt;
+            &lt;div  class="highlight"  id="code-b616f3da-6cb3-11f0-801e-8990e32368c1"&gt;
+                &lt;button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b616f3da-6cb3-11f0-801e-8990e32368c1').getElementsByTagName('code')[0])"&gt;
+                    copy
+                &lt;/button&gt;
+        &lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="c"&gt;% Include package for drawing color boxes&lt;/span&gt;
+&lt;span class="k"&gt;\usepackage&lt;/span&gt;&lt;span class="nb"&gt;{&lt;/span&gt;tcolorbox&lt;span class="nb"&gt;}&lt;/span&gt;
+
+&lt;span class="c"&gt;% Define colors&lt;/span&gt;
+&lt;span class="k"&gt;\definecolor&lt;/span&gt;&lt;span class="nb"&gt;{&lt;/span&gt;codeBg&lt;span class="nb"&gt;}{&lt;/span&gt;rgb&lt;span class="nb"&gt;}{&lt;/span&gt;0.976, 0.949, 0.956&lt;span class="nb"&gt;}&lt;/span&gt;
+&lt;span class="k"&gt;\definecolor&lt;/span&gt;&lt;span class="nb"&gt;{&lt;/span&gt;codeColor&lt;span class="nb"&gt;}{&lt;/span&gt;rgb&lt;span class="nb"&gt;}{&lt;/span&gt;0.780, 0.145, 0.305&lt;span class="nb"&gt;}&lt;/span&gt;
+
+&lt;span class="c"&gt;% Define new command&lt;/span&gt;
+&lt;span class="k"&gt;\newtcbox&lt;/span&gt;&lt;span class="nb"&gt;{&lt;/span&gt;&lt;span class="k"&gt;\bCode&lt;/span&gt;&lt;span class="nb"&gt;}{&lt;/span&gt;
+    nobeforeafter,
+    fontupper=&lt;span class="k"&gt;\color&lt;/span&gt;&lt;span class="nb"&gt;{&lt;/span&gt;codeColor&lt;span class="nb"&gt;}&lt;/span&gt;,
+    colframe=codeBg,
+    colback=codeBg,
+    boxrule=0.1pt,
+    arc=3pt,
+    boxsep=0pt,
+    left=3pt,
+    right=3pt,
+    top=3pt,
+    bottom=4pt,
+    tcbox raise base&lt;span class="nb"&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+&lt;p&gt;В зависимости от параметров вашего документа цветная обводка может быть
+чуть-чуть не симметрична с одной из сторон. Но это легко можно подкорректировать с
+помощью параметров &lt;code&gt;left&lt;/code&gt;, &lt;code&gt;right&lt;/code&gt;, &lt;code&gt;top&lt;/code&gt; и &lt;code&gt;bottom&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Выделить текст можно следующим образом &lt;code&gt;\bCode{ваш код\текст}&lt;/code&gt;.&lt;/p&gt;
+&lt;h4 id="_1"&gt;Источники:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://getbootstrap.com/"&gt;Bootstrap?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.latex-project.org/"&gt;Latex?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><category term="Article"></category><category term="Latex"></category><category term="Bootstrap"></category><category term="code snippet"></category></entry></feed>

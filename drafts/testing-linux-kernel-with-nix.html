@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Testing Linux Kernel with Nix - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Testing Linux Kernel with Nix" />
+		<meta name="date" content="2023-06-05 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2023-06-05 00:00:00+02:00" />
+		<meta property="og:title" content="Testing Linux Kernel with Nix" />
+		<meta property="og:url" content="https://alberand.com/drafts/testing-linux-kernel-with-nix.html" />
+
+			<meta property="og:description" content="Nix provides very flexible Virtual machines, this articles describe how" />
+			<meta name="description" content="Nix provides very flexible Virtual machines, this articles describe how" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Testing Linux Kernel with Nix </h1>
+
+      <time id="title-date">
+          05.06.2023
+      </time>
+  </header>
+  <p>to create a VM which will automatically run fstests with modified Linux kernel.
+Lang: en</p>
+<p>While working on one of the XFS feature in Linux kernel I had a hard time firing
+up VMs for testing. I didn't have well configured image to easily boot up QEMU
+with path to my newly compiled kernel and have it run a few simple tests. I've
+decided to try NixOS with its quite amazing VMs. My goal was to simplify testing
+kernel to one command.</p>
+<p>My goal process had to look like this:
+- I modify my kernel in <code>./linux</code> directory
+- Then I modify userspace tools which VM will use to test the kernel - in my
+  case this was [xfsprogs][]
+- Then I add new tests which VM will use to run the kernel - in my case this was
+  [fstests][]
+- Run the <code>vmtest</code> command which will fire-up VM which will run my tests</p>
+<h1 id="project-structure">Project structure</h1>
+<p>As I want custom command in my <code>./linux</code> directory I went with Nix's flake and
+<code>direnv</code> utility. The flake defines development shell with all dependencies
+necessary for working\compiling the kernel. The <code>direnv</code> automatically activates
+this shell when I enter <code>./linux</code>.</p>
+<p>But also I don't want to complicate this flake too much. As my <code>flake.nix</code> won't
+be accepted upstream I will always need to copy it from one dir to another. So
+it must be one simple file. What I can do is define everything in another flake
+and include it as input.</p>
+<p>I called this input flake - nix-kernel-vm. This flake will define everything
+what we need and flake in the kernel will just call to it with a few parameters.</p>
+<h2 id="linux-kernel-flake">Linux Kernel Flake</h2>
+<p>Let's start with the simple one. While working with the kernel we want to
+specify which tests to use and which userspace tools to use to testit.</p>
+<p>
+            <div  class="highlight"  id="code-b6373b7a-6cb3-11f0-941f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6373b7a-6cb3-11f0-941f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span>
+  <span class="ss">description =</span> <span class="s2">&quot;Linux Kernel development env&quot;</span><span class="p">;</span>
+
+  <span class="ss">inputs =</span> <span class="p">{</span>
+    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:nixos/nixpkgs/nixos-unstable&quot;</span><span class="p">;</span>
+    flake-utils<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:numtide/flake-utils&quot;</span><span class="p">;</span>
+    nix-kernel-vm<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:alberand/nix-kernel-vm&quot;</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="ss">outputs =</span> <span class="p">{</span> self<span class="p">,</span> nixpkgs<span class="p">,</span> flake-utils<span class="p">,</span> nix-kernel-vm <span class="p">}:</span>
+  flake-utils<span class="o">.</span>lib<span class="o">.</span>eachDefaultSystem <span class="p">(</span>system<span class="p">:</span>
+  <span class="k">let</span>
+    <span class="ss">pkgs =</span> <span class="nb">import</span> nixpkgs <span class="p">{</span> <span class="k">inherit</span> system<span class="p">;</span> <span class="p">};</span>
+    <span class="ss">root =</span> <span class="nb">builtins</span><span class="o">.</span><span class="nb">toString</span> <span class="o">.</span><span class="l">/.</span><span class="p">;</span>
+  <span class="k">in</span> <span class="k">rec</span> <span class="p">{</span>
+    devShells<span class="o">.</span><span class="ss">default =</span> nix-kernel-vm<span class="o">.</span>lib<span class="o">.</span>mkLinuxShell <span class="p">{</span>
+      <span class="k">inherit</span> pkgs<span class="p">;</span>
+      <span class="ss">root =</span> root<span class="p">;</span>
+      <span class="ss">xfstests-src =</span> fetchGit <span class="l">/home/alberand/Projects/xfstests-dev</span><span class="p">;</span>
+
+      <span class="ss">xfsprogs-src =</span> pkgs<span class="o">.</span>fetchFromGitHub <span class="p">{</span>
+        <span class="ss">owner =</span> <span class="s2">&quot;alberand&quot;</span><span class="p">;</span>
+        <span class="ss">repo =</span> <span class="s2">&quot;xfsprogs&quot;</span><span class="p">;</span>
+        <span class="ss">rev =</span> <span class="s2">&quot;91bf9d98df8b50c56c9c297c0072a43b0ee02841&quot;</span><span class="p">;</span>
+        <span class="ss">sha256 =</span> <span class="s2">&quot;sha256-otEJr4PTXjX0AK3c5T6loLeX3X+BRBvCuDKyYcY9MQ4=&quot;</span><span class="p">;</span>
+      <span class="p">};</span>
+    <span class="p">};</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>Next we need to tell <code>direnv</code> that it should use devShell from this flake.
+Moreover, this flake is impure as we use local sources (it's not reproducible).
+To achieve this create <code>.envrc</code> with <code>use flake . --impure</code>.</p>
+<p>
+            <div  class="highlight"  id="code-b6376c64-6cb3-11f0-a802-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6376c64-6cb3-11f0-a802-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;use flake . --impure&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>.envrc
+</code></pre></div>
+</p>
+<p>Right after that direnv will warn you that you have to allow to activate
+environment in this directory with <code>direnv allow</code> command.</p>
+<h2 id="nix-kernel-vm-definition-of-vm">nix-kernel-vm - definition of VM</h2>
+<p>This is much more complicated flake which defines VM itself and all the
+necessary <code>lib.</code> functions to use this flake.</p>
+<h1 id="references">References</h1>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//testing-linux-kernel-with-nix.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/drafts/testing-linux-kernel-with-nix.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Testing Linux Kernel with Nix",
+      "description": "Nix provides very flexible Virtual machines, this articles describe how",
+      "datePublished": "2023-06-05 00:00:00+02:00",
+      "dateModified": "2023-06-05 00:00:00",
+      "keywords": "linux, kernel, testing, fstests",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

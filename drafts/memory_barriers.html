@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Memory Barriers and Out-of-Order execution - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Memory Barriers and Out-of-Order execution" />
+		<meta name="date" content="2017-01-28 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2017-01-28 00:00:00+01:00" />
+		<meta property="og:title" content="Memory Barriers and Out-of-Order execution" />
+		<meta property="og:url" content="https://alberand.com/drafts/memory_barriers.html" />
+
+			<meta property="og:description" content="Short version for index and feeds" />
+			<meta name="description" content="Short version for index and feeds" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Memory Barriers and Out-of-Order execution </h1>
+
+      <time id="title-date">
+          28.01.2017
+      </time>
+  </header>
+  <p>Gif animation of a problem (run single threaded -&gt; ok, run multi-threaded -&gt; not ok)</p>
+<h3 id="intro-into-how-single-threaded-cpu-can-swap-storeload-instructions">Intro into how single threaded CPU can swap store/load instructions</h3>
+<p>Load instructions could have data dependencies (TODO find proof and example).
+This cause CPU to swap it with instructions which could be executed while we
+wait for data to be loaded.</p>
+<h3 id="intro-into-how-multi-threaded-cpu-with-two-threads-can-create-double-swap-of">Intro into how multi threaded CPU with two threads can create double swap of</h3>
+<h3 id="instructions">instructions</h3>
+<p>Now imaging what will happen if CPU will swap to store/load instructions on both
+CPU cores. We will get into this situation:</p>
+<p>[DIAGRAM of what happens]</p>
+<h3 id="solution-memory-barriers">Solution - Memory Barriers</h3>
+<p>This could be solved by memory barriers.</p>
+<h3 id="demonstration">Demonstration</h3>
+<h3 id="how-memory-barriers-works">How memory barriers works?</h3>
+<p>It's a CPU instruction.</p>
+<p>As a dependency:</p>
+<p>
+            <div  class="highlight"  id="code-b6362ec1-6cb3-11f0-a32b-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6362ec1-6cb3-11f0-a32b-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>Inserting a memory barrier tells the CPU and the compiler that what happened
+before that command needs to stay before that command, and what happens after
+needs to stay after.  
+</code></pre></div>
+</p>
+<p>Find info regarding this:</p>
+<p>
+            <div  class="highlight"  id="code-b636a060-6cb3-11f0-96c6-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b636a060-6cb3-11f0-96c6-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="n">The</span><span class="w"> </span><span class="n">other</span><span class="w"> </span><span class="n">thing</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">memory</span><span class="w"> </span><span class="n">barrier</span><span class="w"> </span><span class="n">does</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="n">force</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="n">update</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">various</span><span class="w"> </span><span class="n">CPU</span>
+<span class="n">caches</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">example</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">write</span><span class="w"> </span><span class="n">barrier</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="n">flush</span><span class="w"> </span><span class="n">all</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">was</span><span class="w"> </span><span class="n">written</span>
+<span class="n">before</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">barrier</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">cache</span><span class="p">,</span><span class="w"> </span><span class="n">therefore</span><span class="w"> </span><span class="n">any</span><span class="w"> </span><span class="n">other</span><span class="w"> </span><span class="n">thread</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">tries</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">read</span>
+<span class="n">that</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="n">get</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">most</span><span class="w"> </span><span class="n">up</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">date</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="n">regardless</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="n">core</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">which</span>
+<span class="n">socket</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="n">might</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="n">executing</span><span class="w"> </span><span class="n">by</span><span class="o">.</span>
+</code></pre></div>
+</p>
+<p>
+            <div  class="highlight"  id="code-b636c180-6cb3-11f0-9ac2-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b636c180-6cb3-11f0-9ac2-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>$<span class="w"> </span>taskset<span class="w"> </span>-c<span class="w"> </span>./test
+</code></pre></div>
+</p>
+<p>READ this:
+https://lwn.net/Articles/573436/
+https://preshing.com/20120710/memory-barriers-are-like-source-control-operations/
+https://stackoverflow.com/questions/19965076/gcc-memory-barrier-sync-synchronize-vs-asm-volatile-memory
+https://mariadb.org/wp-content/uploads/2017/11/2017-11-Memory-barriers.pdf</p>
+<p>Example:
+https://peeterjoot.wordpress.com/2010/06/07/a-nice-simple-example-of-a-memory-barrier-requirement/</p>
+<p>https://preshing.com/20120515/memory-reordering-caught-in-the-act/</p>
+<p>Good explanation of cpp memory model and sync primitives
+https://stackoverflow.com/questions/6319146/c11-introduced-a-standardized-memory-model-what-does-it-mean-and-how-is-it-g?rq=1</p>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//memory_barriers.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/drafts/memory_barriers.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Memory Barriers and Out-of-Order execution",
+      "description": "Short version for index and feeds",
+      "datePublished": "2017-01-28 00:00:00+01:00",
+      "dateModified": "2017-01-28 00:00:00",
+      "keywords": "pelican, publishing",
+      "image": "https://alberand.com/images/zephyr-logo.jpg",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

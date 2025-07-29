@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Host only networking set up for QEMU - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Host only networking set up for QEMU" />
+		<meta name="date" content="2017-03-24 00:00:00+01:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2017-03-24 00:00:00+01:00" />
+		<meta property="og:title" content="Host only networking set up for QEMU" />
+		<meta property="og:url" content="https://alberand.com/host-only-networking-set-up-for-qemu-hypervisor.html" />
+
+			<meta property="og:description" content="In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine)." />
+			<meta name="description" content="In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine)." />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Host only networking set up for QEMU </h1>
+
+      <time id="title-date">
+          24.03.2017
+      </time>
+  </header>
+  <p>In this short note I will try to describe how to set up host-only network for QEMU
+hypervisor. It means that guest system (run in QEMU) will be in LAN network
+with a host system (physical machine). I used it for some experiments with SSH 
+functionality of a guest system.</p>
+<p>Connection will be establish by virtual bridge and TAP interface. After host
+setup you will need to assign IP address to the guest system.</p>
+<p>Firstly, create a bridge on the host machine:</p>
+<p>
+            <div  class="highlight"  id="code-b62333c7-6cb3-11f0-8c4a-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62333c7-6cb3-11f0-8c4a-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>link<span class="w"> </span>add<span class="w"> </span>br0<span class="w"> </span><span class="nb">type</span><span class="w"> </span>bridge
+</code></pre></div>
+</p>
+<p>If you want to use already created bridge don't forget to clean out IP.</p>
+<p>
+            <div  class="highlight"  id="code-b6233ffd-6cb3-11f0-9772-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6233ffd-6cb3-11f0-9772-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>addr<span class="w"> </span>flush<span class="w"> </span>dev<span class="w"> </span>br0
+</code></pre></div>
+</p>
+<p>Assign IP to the bridge.</p>
+<p>
+            <div  class="highlight"  id="code-b6234bf4-6cb3-11f0-9ca5-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6234bf4-6cb3-11f0-9ca5-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>addr<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.100.50/24<span class="w"> </span>brd<span class="w"> </span><span class="m">192</span>.168.100.255<span class="w"> </span>dev<span class="w"> </span>br0
+</code></pre></div>
+</p>
+<p>Create TAP interface.</p>
+<p>
+            <div  class="highlight"  id="code-b62358f9-6cb3-11f0-abf9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62358f9-6cb3-11f0-abf9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>tuntap<span class="w"> </span>add<span class="w"> </span>mode<span class="w"> </span>tap<span class="w"> </span>user<span class="w"> </span><span class="k">$(</span>whoami<span class="k">)</span>
+ip<span class="w"> </span>tuntap<span class="w"> </span>show
+</code></pre></div>
+</p>
+<p>Output should contains name of created TAP interface:</p>
+<p>
+            <div  class="highlight"  id="code-b623669b-6cb3-11f0-b6d1-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b623669b-6cb3-11f0-b6d1-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>~<span class="w"> </span>tap0:<span class="w"> </span>tap<span class="w"> </span>UNKNOWN_FLAGS:800<span class="w"> </span>user<span class="w"> </span><span class="m">1000</span>
+</code></pre></div>
+</p>
+<p>Add TAP interface to the bridge.</p>
+<p>
+            <div  class="highlight"  id="code-b6237290-6cb3-11f0-9046-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6237290-6cb3-11f0-9046-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>link<span class="w"> </span><span class="nb">set</span><span class="w"> </span>tap0<span class="w"> </span>master<span class="w"> </span>br0
+</code></pre></div>
+</p>
+<p>Make sure everything is up:</p>
+<p>
+            <div  class="highlight"  id="code-b6237ebb-6cb3-11f0-bb3c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6237ebb-6cb3-11f0-bb3c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>ip<span class="w"> </span>link<span class="w"> </span><span class="nb">set</span><span class="w"> </span>dev<span class="w"> </span>br0<span class="w"> </span>up
+sudo<span class="w"> </span>ip<span class="w"> </span>link<span class="w"> </span><span class="nb">set</span><span class="w"> </span>dev<span class="w"> </span>tap0<span class="w"> </span>up
+</code></pre></div>
+</p>
+<p>Assign IP range to the bridge.</p>
+<p>
+            <div  class="highlight"  id="code-b6238d10-6cb3-11f0-bfd9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6238d10-6cb3-11f0-bfd9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>sudo<span class="w"> </span>dnsmasq<span class="w"> </span>--interface<span class="o">=</span>br0<span class="w"> </span>--bind-interfaces<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dhcp-range<span class="o">=</span><span class="m">192</span>.168.100.50,192.168.100.254
+</code></pre></div>
+</p>
+<p>Make sure that interfaces are UP. If not run previously mentioned commands to set
+TAP interface up (br0 will change its state automatically). Run Qemu with some
+MAC address:</p>
+<p>
+            <div  class="highlight"  id="code-b62399df-6cb3-11f0-8bb9-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62399df-6cb3-11f0-8bb9-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>qemu<span class="w"> </span>-device<span class="w"> </span>e1000,netdev<span class="o">=</span>network0,mac<span class="o">=</span><span class="m">00</span>:00:00:00:00:00<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-netdev<span class="w"> </span>tap,id<span class="o">=</span>network0,ifname<span class="o">=</span>tap0,script<span class="o">=</span>no,downscript<span class="o">=</span>no
+</code></pre></div>
+</p>
+<p>In the guest system assign static IP address to the network interface:</p>
+<p>
+            <div  class="highlight"  id="code-b623a826-6cb3-11f0-945f-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b623a826-6cb3-11f0-945f-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>ip<span class="w"> </span>addr<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.100.224/24<span class="w"> </span>broadcast<span class="w"> </span><span class="m">192</span>.168.100.255<span class="w"> </span>dev<span class="w"> </span>eth0
+</code></pre></div>
+</p>
+<p>Don't forget to add root password:</p>
+<p>
+            <div  class="highlight"  id="code-b623b52b-6cb3-11f0-b052-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b623b52b-6cb3-11f0-b052-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>passwd
+</code></pre></div>
+</p>
+<p>Now you can connect to the Qemu guest system using SSH:</p>
+<p>
+            <div  class="highlight"  id="code-b624bffd-6cb3-11f0-b8c0-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b624bffd-6cb3-11f0-b8c0-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="n">ssh</span><span class="w"> </span><span class="n">root</span><span class="mf">@192.168.100.224</span>
+</code></pre></div>
+</p>
+<h4 id="troubleshooting">Troubleshooting</h4>
+<p>If you get an error that tap0 is already in use, possibly, you are trying to run
+more than one version of QEMU for one TAP interface. Described configuration is
+used only for two peers (host and guest). For multiple connection you need
+different configuration.</p>
+<p>As mentioned before make sure that both TAP and Bridge are up.  Otherwise you
+will fail to connect via SSH.</p>
+<h4 id="references">References</h4>
+<ul>
+<li><a href="http://www.qemu-project.org/">QEMU?</a></li>
+<li><a href="https://en.wikipedia.org/wiki/TUN/TAP">TUN/TAP?</a></li>
+</ul>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//QEMU.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/host-only-networking-set-up-for-qemu-hypervisor.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Host only networking set up for QEMU",
+      "description": "In this short note I will try to describe how to set up host-only network for QEMU. It means that guest system (run in QEMU) will be in LAN network with a host system (physical machine).",
+      "datePublished": "2017-03-24 00:00:00+01:00",
+      "dateModified": "2020-01-03 00:00:00",
+      "keywords": "qemu, linux, network, host-guest",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

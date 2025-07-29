@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Handling file dialog in Selenium tests (Windows & Linux) - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Handling file dialog in Selenium tests (Windows & Linux)" />
+		<meta name="date" content="2018-10-22 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2018-10-22 00:00:00+02:00" />
+		<meta property="og:title" content="Handling file dialog in Selenium tests (Windows & Linux)" />
+		<meta property="og:url" content="https://alberand.com/selenium-file-dialog.html" />
+
+			<meta property="og:description" content="How to handle file dialog in any browser with Selenium framework." />
+			<meta name="description" content="How to handle file dialog in any browser with Selenium framework." />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Handling file dialog in Selenium tests (Windows & Linux) </h1>
+
+      <time id="title-date">
+          22.10.2018
+      </time>
+  </header>
+  <p>Selenium is awesome automation tool for testing your website and simulating
+user's actions. I used it for a few times and found one important feature which
+is missing - as far as I know it is impossible to handle "Open File" or "Save
+File" dialog:</p>
+<p>
+<figure class="article-figure"><img alt="Browser File Dialog" src="images/firefox_file_upload_dialog_small.png"></figure>
+</p>
+<p>Selenium uses JavaScript to simulate clicks, typing and many other manipulation
+with a web-page. Unfortunately, when user clicks on the button to save a file
+the browser opens an operating system's file dialog. This dialog is not part of
+the site or even a browser. As JavaScript is "jailed" by the browser it can't
+get access to the external window. There comes the problem. How a test can save
+the file (press the save button)?</p>
+<div class="toc"><span class="toctitle">Table of contents:</span><ul>
+<li><a href="#existing-solutions">Existing Solutions</a></li>
+<li><a href="#windows-solution-autoit">Windows Solution - AutoIt</a></li>
+<li><a href="#linux-solution-xdotool">Linux Solution - xdotool</a><ul>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h4 id="existing-solutions">Existing Solutions</h4>
+<p>The first solution came to my mind was to get control over the HTML's <code>input</code>
+tag and set path to the file as I want. When you choose a file the <em>value</em>
+attribute changes to the address of the file. Unfortunately (or not), we can't
+just change this attribute from JavaScript. It's forbidden due to security
+reasons. If it were possible sites could steal user's private data by setting the
+attribute to some sensitive files (for example, passwords, logs). So, it is not
+the way. </p>
+<p>The other way around is to use some UI automation tool, in addition to Selenium.
+There are some approaches with <a href="https://github.com/pywinauto/pywinauto">pywuiauto</a> but this library is Windows
+specific.</p>
+<p>Then I turned to Sikuli - quite a nice library for automation of graphical
+interfaces. Its main advantage is that it use image processing to find similar
+elements (you need to defined via prepared screenshots of the elements). However,
+Sikuli is quite big and has its own Pythonic language with dedicated IDE. That's
+too complex solution for such a simple task.</p>
+<h4 id="windows-solution-autoit">Windows Solution - AutoIt</h4>
+<p>After some further search I came across AutoIt - also an automation tool for
+graphical user interfaces. What catch my attention was that scripts written for
+AutoIt could be simply compiled into standalone executables. That's super
+convenient! In result all you get in addition to your test is a <code>.exe</code> file. The
+following listing shows my script for handling file dialog for the most
+popular browsers:</p>
+<p>
+            <div  class="highlight"  id="code-b6483af6-6cb3-11f0-9645-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6483af6-6cb3-11f0-9645-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="o">...</span>
+<span class="c1">#include &lt;MsgBoxConstants.au3&gt;</span>
+
+<span class="n">If</span><span class="w"> </span><span class="o">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;chrome&quot;</span><span class="w"> </span><span class="n">Then</span>
+<span class="w">    </span><span class="o">$</span><span class="n">sTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Open&quot;</span>
+<span class="n">ElseIf</span><span class="w"> </span><span class="o">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;edge&quot;</span><span class="w"> </span><span class="n">Then</span>
+<span class="w">    </span><span class="o">$</span><span class="n">sTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Open&quot;</span>
+<span class="n">ElseIf</span><span class="w"> </span><span class="o">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;firefox&quot;</span><span class="w"> </span><span class="n">Then</span>
+<span class="w">    </span><span class="o">$</span><span class="n">sTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;File Upload&quot;</span>
+<span class="n">ElseIf</span><span class="w"> </span><span class="o">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;ie&quot;</span><span class="w"> </span><span class="n">Then</span>
+<span class="w">    </span><span class="o">$</span><span class="n">sTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Choose File to Upload&quot;</span>
+<span class="n">Else</span><span class="w"> </span>
+<span class="w">    </span><span class="n">MsgBox</span><span class="p">(</span><span class="o">$</span><span class="n">MB_SYSTEMMODAL</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Unknown browser&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">Exit</span>
+<span class="n">EndIf</span>
+
+<span class="p">;</span><span class="w"> </span><span class="n">Find</span><span class="w"> </span><span class="n">window</span>
+<span class="n">WinActivate</span><span class="p">(</span><span class="o">$</span><span class="n">sTitle</span><span class="p">)</span><span class="w"> </span>
+
+<span class="p">;</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">file</span>
+<span class="n">Send</span><span class="p">(</span><span class="s2">&quot;{ALTDOWN}n{ALTUP}&quot;</span><span class="p">)</span>
+<span class="n">send</span><span class="p">(</span><span class="o">$</span><span class="n">CmdLine</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">Send</span><span class="p">(</span><span class="s2">&quot;{ALTDOWN}O{ALTUP}&quot;</span><span class="p">)</span>
+</code></pre></div>
+</p>
+<p>Run it with two arguments: <code>handler.exe firefox C:/path/to/file.txt</code></p>
+<h4 id="linux-solution-xdotool">Linux Solution - xdotool</h4>
+<p>For Linux there exist a tool called <strong>xdotool</strong>. It is similar to AutoIt but it
+only simulate keyboard input, mouse movements and windows manipulation.
+However, it is enough to open a file. The following script looks for open file
+dialog for Firefox or Chromium browser, switches to that window, types path to
+the file and press "Open" button (can be done by a shortcut: ALT+O). </p>
+<p>
+            <div  class="highlight"  id="code-b648c5f4-6cb3-11f0-a0a3-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b648c5f4-6cb3-11f0-a0a3-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="o">...</span>
+
+<span class="n">file</span><span class="o">=</span><span class="s2">&quot;/home/andrew/42.png&quot;</span>
+
+<span class="n">browser</span><span class="o">=</span><span class="s2">&quot;firefox&quot;</span>
+<span class="c1"># browser=&quot;chromium&quot;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;$browser&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;firefox&quot;</span><span class="w"> </span><span class="p">];</span><span class="w"> </span><span class="n">then</span>
+<span class="w">    </span><span class="n">win_name</span><span class="o">=</span><span class="s2">&quot;File Upload&quot;</span>
+<span class="n">fi</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;$browser&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;chromium&quot;</span><span class="w"> </span><span class="p">];</span><span class="w"> </span><span class="n">then</span>
+<span class="w">    </span><span class="n">win_name</span><span class="o">=</span><span class="s2">&quot;Open File&quot;</span>
+<span class="n">fi</span>
+
+<span class="n">echo</span><span class="w"> </span><span class="s2">&quot;Looking for the window of the &#39;$browser&#39; browser with name &#39;$win_name&#39;&quot;</span>
+
+<span class="c1"># Find window PID</span>
+<span class="n">WIN</span><span class="o">=$</span><span class="p">(</span><span class="k">for</span><span class="w"> </span><span class="n">pid</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">$</span><span class="p">(</span><span class="n">xdotool</span><span class="w"> </span><span class="n">search</span><span class="w"> </span><span class="o">--</span><span class="k">class</span><span class="w"> </span><span class="s2">&quot;$browser&quot;</span><span class="p">);</span><span class="w"> </span><span class="n">do</span><span class="w"> </span>\
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">[[</span><span class="w"> </span><span class="o">$</span><span class="p">(</span><span class="n">xdotool</span><span class="w"> </span><span class="n">getwindowname</span><span class="w"> </span><span class="o">$</span><span class="n">pid</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;$win_name&quot;</span><span class="w"> </span><span class="p">]];</span><span class="w"> </span>\
+<span class="w">    </span><span class="n">then</span><span class="w"> </span><span class="n">echo</span><span class="w"> </span><span class="o">$</span><span class="n">pid</span><span class="p">;</span><span class="w"> </span><span class="n">fi</span><span class="p">;</span><span class="w"> </span><span class="n">done</span><span class="p">)</span>
+
+<span class="c1"># Switch to the window</span>
+<span class="n">xdotool</span><span class="w"> </span><span class="n">windowactivate</span><span class="w"> </span><span class="o">$</span><span class="n">WIN</span>
+
+<span class="c1"># Send file path</span>
+<span class="n">xdotool</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">--</span><span class="n">window</span><span class="w"> </span><span class="o">$</span><span class="n">WIN</span><span class="w"> </span><span class="s2">&quot;$file&quot;</span>
+
+<span class="c1"># Press &quot;Open&quot; button</span>
+<span class="n">xdotool</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">--</span><span class="n">window</span><span class="w"> </span><span class="o">$</span><span class="n">WIN</span><span class="w"> </span><span class="n">alt</span><span class="o">+</span><span class="n">o</span>
+</code></pre></div>
+</p>
+<p>These are the most elegant solution which I found. Even though it need
+additional software it showed itself as simple and reliable way to approach file
+dialogs. All the script can be downloaded from the following link:</p>
+<div style="width:300px; text-align:center; margin: 0 auto;">
+<a href="https://alberand.com/materials/handle_file_dialog.tar">Download scripts</a>
+</div>
+
+<h5 id="references">References</h5>
+<ul>
+<li><a href="https://www.semicomplete.com/projects/xdotool/">xdotool webpage</a></li>
+<li><a href="https://www.autoitscript.com/site/autoit/">AutoIt website</a></li>
+<li><a href="https://www.seleniumhq.org/">Selenium website</a></li>
+</ul>
+<style>
+    h5 {
+        font-weight: bold;
+    }
+</style>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//handle_file_dialog.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/selenium-file-dialog.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Handling file dialog in Selenium tests (Windows & Linux)",
+      "description": "How to handle file dialog in any browser with Selenium framework.",
+      "datePublished": "2018-10-22 00:00:00+02:00",
+      "dateModified": "2018-10-22 00:00:00",
+      "keywords": "Selenium, testing, AutoIt, xdotool",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

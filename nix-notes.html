@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en"
+	prefix="og: https://ogp.me/ns#"
+	xmlns:og="http://opengraphprotocol.org/schema/">
+  <head>
+	<title>
+Nix cheatsheet - Andrey Albershtein	</title>
+
+	<meta name="author" content="Andrey Albershteyn" />
+	<meta name="copyright" content="Andrey Albershteyn" />
+
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<meta charset="utf-8">
+
+	<link href="https://alberand.com/theme/bootstrap.css" rel="stylesheet">
+	<link href="https://alberand.com/theme/style.css" rel="stylesheet" />
+	<link href="https://alberand.com/theme/highlight.css" rel="stylesheet" />
+
+	<meta name="twitter:site" content="@alberand_" />
+	<meta name="twitter:creator" content="@alberand_" />
+	<meta name="twitter:card" content="summary" />
+
+		<meta name="twitter:title" content="Nix cheatsheet" />
+		<meta name="date" content="2023-09-13 00:00:00+02:00" />
+		<meta property="og:type" content="article" />
+		<meta property="og:locale" content="en" />
+		<meta property="og:published_time" content="2023-09-13 00:00:00+02:00" />
+		<meta property="og:title" content="Nix cheatsheet" />
+		<meta property="og:url" content="https://alberand.com/nix-notes.html" />
+
+			<meta property="og:description" content="This is collection of common problems I face working with Nix packages" />
+			<meta name="description" content="This is collection of common problems I face working with Nix packages" />
+
+		<link href="https://alberand.com/feeds/all.atom.xml"
+			type="application/atom+xml" rel="alternate"
+			title="alberand" />
+
+	<!-- Scripts -->
+	<script src="https://alberand.com/theme/jquery.min.js"></script>
+	<script src="https://alberand.com/theme/common.js"></script>
+
+  </head>
+
+  <body id="index">
+    <div class="container">
+
+<div class="row" id="home-button-row">
+  <a href="https://alberand.com" id="home-button">&#x2190 home</a>
+</div>
+
+<article id="content">
+  <header>
+      <h1 id="title"> Nix cheatsheet </h1>
+
+      <time id="title-date">
+          13.09.2023
+      </time>
+  </header>
+  <p>This is collection of common problems/issues I faced working with Nix packages
+or on NixOS. I find it quite difficult to find necessary information in Nix
+reference as it missing or hidden too deep in the text.</p>
+<h2 id="i-just-want-to-build-a-derivation">I just want to build a derivation</h2>
+<p>From time to time I google for an expression to put into <code>default.nix</code> to build
+a derivation defined in <code>derivation.nix</code>. Here is oneliner:</p>
+<p>
+            <div  class="highlight"  id="code-b6211bac-6cb3-11f0-81ee-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6211bac-6cb3-11f0-81ee-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>nix-build<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;with import &lt;nixpkgs&gt; { }; callPackage ./derivation.nix { }&#39;</span>
+</code></pre></div>
+</p>
+<p>You can also put this expression into default.nix and run with just <code>nix-build</code>.
+The <code>-K</code> will create nix-build-derivation-ver directory in <code>/tmp</code> so you can
+debug it.</p>
+<h2 id="shellnix-example">shell.nix example</h2>
+<p>I'm always looking for <code>shell.nix</code> example which I create almost in every
+project:</p>
+<p>
+            <div  class="highlight"  id="code-b62127f7-6cb3-11f0-8d85-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62127f7-6cb3-11f0-8d85-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> pkgs <span class="o">?</span> <span class="nb">import</span> <span class="l">&lt;nixpkgs&gt;</span> <span class="p">{}</span> <span class="p">}:</span>
+pkgs<span class="o">.</span>mkShell <span class="p">{</span>
+  <span class="c1"># runtime deps</span>
+  <span class="ss">buildInputs =</span> <span class="p">[</span>
+    hello
+  <span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<h2 id="why-src-fails-but-src-fetchfromgithub-not">Why src = ./.; fails but src = fetchFromGithub {...} not?</h2>
+<p>This is because your local copy is probably dirty; nix does <code>cp</code> which copies
+all stuff to /nix/store. In some cases running <code>make clean</code> will save you. But I
+would suggest using git to fetch your local branch:</p>
+<p>
+            <div  class="highlight"  id="code-b6213656-6cb3-11f0-bfa8-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6213656-6cb3-11f0-bfa8-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="ss">src =</span> fetchgit <span class="p">{</span>
+    <span class="ss">url =</span> <span class="o">.</span><span class="l">/.</span><span class="p">;</span>
+    <span class="ss">hash =</span> <span class="s2">&quot;sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<p>Note that you will need to commit all your changes.</p>
+<h2 id="error-cycle-detected-in-build-of-nixstorexxxdrv-in-the-references-of-output-bin-from-output-out">error: cycle detected in build of '/nix/store/xxx.drv' in the references of output 'bin' from output 'out'</h2>
+<p>Don't know what this error is about but I solved it by removing "bin" from the
+<code>outputs</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b62146a4-6cb3-11f0-a570-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62146a4-6cb3-11f0-a570-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="p">{</span> pkgs <span class="o">?</span> <span class="nb">import</span> <span class="l">&lt;nixpkgs&gt;</span> <span class="p">{}</span> <span class="p">}:</span>
+<span class="k">with</span> pkgs<span class="p">;</span> stdenv<span class="o">.</span>mkDerivation <span class="k">rec</span> <span class="p">{</span>
+
+  <span class="o">...</span>
+
+  <span class="c1">#          &quot;bin&quot; was here</span>
+  <span class="c1">#          v</span>
+  <span class="ss">outputs =</span> <span class="p">[</span> <span class="s2">&quot;dev&quot;</span> <span class="s2">&quot;out&quot;</span> <span class="s2">&quot;doc&quot;</span> <span class="p">];</span>
+
+  <span class="o">...</span>
+
+<span class="p">}</span>
+</code></pre></div>
+</p>
+<h2 id="flake-input-is-not-the-latest-commit">Flake input is not the latest commit</h2>
+<p>From time to time results of the <code>nix build .#</code> didn't have the latest inputs.
+This probably happens because use specified your input as a git branch and did
+some changes to the branch. But forgot to tell nix that the branch was changed
+(with <code>nix flake update</code>):</p>
+<p>
+            <div  class="highlight"  id="code-b62158b3-6cb3-11f0-9182-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b62158b3-6cb3-11f0-9182-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code><span class="o">...</span>
+<span class="ss">inputs =</span> <span class="p">{</span>
+    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:nixos/nixpkgs/nixos-unstable&quot;</span><span class="p">;</span>
+    <span class="c1">#                                        vvvvvvvvvvvvvvvvvv</span>
+    xfsprogs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:alberand/xfsprogs?branch=fsverity-v2&quot;</span><span class="p">;</span>
+    xfsprogs<span class="o">.</span><span class="ss">flake =</span> <span class="no">false</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="o">...</span>
+</code></pre></div>
+</p>
+<p>The solution to this is always use <code>rev=&lt;commit hash&gt;</code> to pinpoint flake's
+inputs.</p>
+<h2 id="force-rebuild-download-sources">Force rebuild (download sources)</h2>
+<p>When running something like <code>nix run github:alberand/nix-kernel-vm</code> nix will
+download the source code. Unfortunately, if repository is updated right after
+that, nix will not re-download new version if command is run again. I haven't
+found a way to force nix do it except asking garbage collector to clean the
+whole <code>/nix/store</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b6216cb8-6cb3-11f0-aa1c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6216cb8-6cb3-11f0-aa1c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>nix-store<span class="w"> </span>-gc
+</code></pre></div>
+</p>
+<p>Note that this command remove only unused packages (ones which are not installed
+into the system).</p>
+<h2 id="disable-remote-buildersdistributed-build">Disable remote builders/distributed build</h2>
+<p>I have two machines, one is more powerful which is used as Binary cache and
+remote builder. However, when debugging broken build there's need to build nix
+derivation locally. To disable distributed build without changing system
+configuration one can use:</p>
+<p>
+            <div  class="highlight"  id="code-b6217733-6cb3-11f0-95c4-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6217733-6cb3-11f0-95c4-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>nix-build<span class="w"> </span>--builders<span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span>/nix/store/ls9jdiy2ihizrglvba080565rrk1ri3b-xfstests-git.drv
+</code></pre></div>
+</p>
+<h2 id="list-of-derivation-phases">List of derivation phases</h2>
+<p>The <code>$</code> marks empty by default phases. Depending on the package other phases
+could also be empty.</p>
+<ul>
+<li>$prePhases</li>
+<li>unpackPhase</li>
+<li>patchPhase</li>
+<li>$preConfigurePhases</li>
+<li>configurePhase</li>
+<li>$preBuildPhases</li>
+<li>buildPhase</li>
+<li>checkPhase</li>
+<li>$preInstallPhases</li>
+<li>installPhase</li>
+<li>fixupPhase</li>
+<li>installCheckPhase</li>
+<li>$preDistPhases</li>
+<li>distPhase</li>
+<li>$postPhases</li>
+</ul>
+<h2 id="get-a-hash-of-a-source">Get a hash of a source</h2>
+<p><code>nurl</code> can also use fetcher set with an argument or overwrite any fetcher
+arguments (pretty handy to set <code>allRefs</code> when commit is not on master)</p>
+<p>
+            <div  class="highlight"  id="code-b622084a-6cb3-11f0-aa2c-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b622084a-6cb3-11f0-aa2c-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>nix-shell -p nurl --run \
+    &quot;nurl https://github.com/alberand/linux 007f6ea233d9d18e7d44dbf643bf900967a55ef9 2&gt;/dev/null&quot;
+</code></pre></div>
+</p>
+<p>with <code>allRefs</code>:</p>
+<p>
+            <div  class="highlight"  id="code-b6227485-6cb3-11f0-8df0-8990e32368c1">
+                <button
+                  type="button"
+                  class="copy-code-button"
+                  onclick="copy_to_clipboard(document.getElementById('code-b6227485-6cb3-11f0-8df0-8990e32368c1').getElementsByTagName('code')[0])">
+                    copy
+                </button>
+        <pre><span></span><code>nix-shell -p nurl --run \
+    &quot;nurl --fetcher builtins.fetchGit --arg allRefs true https://github.com/alberand/linux v6.15 2&gt;/dev/null&quot;
+</code></pre></div>
+</p>
+</article>
+
+<div id="about">
+<hr/>
+
+<address id="author" class="row">
+  <div id="author-photo" class="col-sm-auto">
+    <img width="130px" height="130px" style="margin-top: 15px;"
+      src="https://alberand.com/theme/profile-photo-circle.png">
+  </div>
+  <div id="author-description" class="col-sm">
+    Hey👋 I'm Andrey. In this blog I post my personal short tutorials or
+    interesting technical notes. Over the day I work as a Software Engineer
+    developing and testing Linux filesystems. I use free software mainly #NixOS
+    #Neovim #Kitty. Btw I use NixOS. Subscribe for updates on:
+
+    <p class="contacts">
+      <a class="link-in-code" href="https://t.me/missinglog">telegram</a>
+      •
+      <a class="link-in-code" href="https://mas.to/@alberand">@alberand@mas.to</a>
+      •
+      <a class="link-in-code" href="https://twitter.com/alberand_">twitter</a>
+    </p>
+  </div>
+</address>
+<hr/>
+
+<div class="row" id="feedback-footer">
+    <div class="col">
+        <p>
+	        For comments, please send me an 
+            <a class="link-in-code" href="mailto:albershteyn.andrey@gmail.com"
+                target="_top">email</a> or contact me on
+            <a class="link-in-code" href="https://t.me/alberand">Telegram</a>.
+	    </p>
+	    <p>
+	        Or create <a class="link-in-code" 
+                href="https://github.com/alberand/Blog/blob/master/content//nix-notes.md">
+                pull request with improvements</a>
+	    </p>
+    </div>
+</div>
+</div>
+
+<a href="#">
+	<div>
+		<span class="comment-scroll-arrow"></span>
+	</div>
+</a>
+
+<!-- Structured data -->
+<!-- Google's Metadata -->
+<script type="application/ld+json">
+    {
+      "@context":"http://schema.org",
+      "@type":"BlogPosting",
+      "mainEntityOfPage":"https://alberand.com/nix-notes.html",
+      "author":{
+        "@type": "Person",
+        "name": "Andrey Albershtein"
+      },
+      "headline": "Nix cheatsheet",
+      "description": "This is collection of common problems I face working with Nix packages",
+      "datePublished": "2023-09-13 00:00:00+02:00",
+      "dateModified": "2023-10-16 00:00:00",
+      "keywords": "nix, faq, common problems, nixos, nixpkgs",
+      "image": "https://alberand.com/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Andrey Albershtein",
+        "logo": {
+			"@type": "ImageObject",
+            "url": "https://alberand.com/images/blog-logo.png",
+			"height": "256",
+            "width": "256"
+        }
+      }
+    }
+</script>
+
+    </div>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-112030276-1', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>
